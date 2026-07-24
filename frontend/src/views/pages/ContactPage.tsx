@@ -3,6 +3,9 @@ import { motion } from "motion/react";
 import { ParallaxHero, PageHeroContent, playfair, dmSans, fadeUp, dur } from "./shared";
 
 import imgHero from "@/imports/Frame/2931faa4fb3b24cc54f99029e860b2cd40ee76df.png";
+import mapSvg from "@/imports/contact/map.svg";
+
+const GOOGLE_MAPS_URL = "https://www.google.com/maps/place/Vedic+Hermitage+-+Ayur+Mana/@10.7938681,76.3028862,14z";
 
 const contactInfo = [
   { label: "Address", value: "Swastika Ayurveda Foundation , Vedic Hermitage , Edakode Vaniyamkulam , Ottapalam, Palakkad" },
@@ -12,7 +15,7 @@ const contactInfo = [
 ];
 
 const navLinks = [
-  { label: "How to reach us", href: "#" },
+  { label: "How to reach us", href: GOOGLE_MAPS_URL },
   { label: "Language spoken", href: "#" },
   { label: "Nearest airport", href: "#" },
 ];
@@ -97,17 +100,35 @@ export default function ContactPage() {
                 <span className="text-[15px] sm:text-[16px] leading-[1.5] text-[#6b5e54]" style={{ fontFamily: dmSans }}>{info.value}</span>
               </div>
             ))}
+
+            {/* Clickable Location Map SVG Card */}
+            <div className="pt-2 flex flex-col gap-3">
+              <span className="text-[14px] font-semibold uppercase text-[#c4622d]" style={{ fontFamily: dmSans }}>Location Map</span>
+              <a
+                href={GOOGLE_MAPS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-4 p-4 rounded-[10px] bg-[#faf6f0] border border-[#d9d1c7] hover:border-[#c4622d] transition-all group cursor-pointer shadow-sm hover:shadow-md max-w-[300px]"
+                title="Open location on Google Maps"
+              >
+                <img
+                  src={mapSvg}
+                  alt="Vedic Hermitage Location Map"
+                  className="w-16 h-auto shrink-0 group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="flex flex-col gap-1">
+                  {/* <span className="text-[14px] font-semibold text-[#2d241e] group-hover:text-[#c4622d] transition-colors" style={{ fontFamily: dmSans }}>
+                    View on Google Maps
+                  </span> */}
+                  <span className="text-[12px] text-[#6b5e54] flex items-center gap-1" style={{ fontFamily: dmSans }}>
+                    Get Directions ↗
+                  </span>
+                </div>
+              </a>
+            </div>
           </motion.div>
         </div>
       </section>
-
-      {/* Map placeholder */}
-      <div className="bg-[#faf6f0] h-[300px] sm:h-[400px] flex items-center justify-center border-y border-[#e6e2dc] px-6">
-        <div className="text-center flex flex-col gap-3">
-          <p className="text-[24px] sm:text-[32px] font-normal text-[#6b5e54]" style={{ fontFamily: playfair }}>Map View: Kerala, India</p>
-          <p className="text-[14px] sm:text-[15px] text-[#6b5e54]/70" style={{ fontFamily: dmSans }}>Thrissur, Kerala – 680 001</p>
-        </div>
-      </div>
 
       {/* Nav links */}
       <div className="bg-white border-b border-[#e6e2dc] flex flex-col sm:flex-row items-center justify-center gap-8 sm:gap-20 py-8 sm:py-10">
