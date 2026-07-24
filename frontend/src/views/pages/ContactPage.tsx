@@ -5,7 +5,7 @@ import { ParallaxHero, PageHeroContent, playfair, dmSans, fadeUp, dur } from "./
 import imgHero from "@/imports/Frame/2931faa4fb3b24cc54f99029e860b2cd40ee76df.png";
 import mapSvg from "@/imports/contact/map.svg";
 
-const GOOGLE_MAPS_URL = "https://www.google.com/maps/place/Vedic+Hermitage+-+Ayur+Mana/@10.7938681,76.3028862,14z";
+const GOOGLE_MAPS_URL = "https://www.google.com/maps/place/Vedic+Hermitage+-+Ayur+Mana/@10.7938681,76.3028862,17z/data=!3m1!4b1!4m6!3m5!1s0x3ba7dbaf65d2dbd1:0x474377487349aa9a!8m2!3d10.7938681!4d76.3028862";
 
 const contactInfo = [
   { label: "Address", value: "Swastika Ayurveda Foundation , Vedic Hermitage , Edakode Vaniyamkulam , Ottapalam, Palakkad" },
@@ -101,11 +101,11 @@ export default function ContactPage() {
               </div>
             ))}
 
-            {/* Clickable Location Map SVG Card */}
+            {/* Clickable Map SVG Image */}
             <div className="pt-2 flex flex-col gap-3">
               <span className="text-[14px] font-semibold uppercase text-[#c4622d]" style={{ fontFamily: dmSans }}>Location Map</span>
               <a
-                href={GOOGLE_MAPS_URL}
+                href="https://www.google.com/maps?q=Vedic+Hermitage+Ayur+Mana&ftid=0x3ba7dbaf65d2dbd1:0x474377487349aa9a"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-4 p-4 rounded-[10px] bg-[#faf6f0] border border-[#d9d1c7] hover:border-[#c4622d] transition-all group cursor-pointer shadow-sm hover:shadow-md max-w-[300px]"
@@ -117,12 +117,8 @@ export default function ContactPage() {
                   className="w-16 h-auto shrink-0 group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="flex flex-col gap-1">
-                  {/* <span className="text-[14px] font-semibold text-[#2d241e] group-hover:text-[#c4622d] transition-colors" style={{ fontFamily: dmSans }}>
-                    View on Google Maps
-                  </span> */}
-                  <span className="text-[12px] text-[#6b5e54] flex items-center gap-1" style={{ fontFamily: dmSans }}>
-                    Get Directions ↗
-                  </span>
+                  <span className="text-[14px] font-semibold text-[#2d241e] group-hover:text-[#c4622d] transition-colors" style={{ fontFamily: dmSans }}>View on Google Maps</span>
+                  <span className="text-[12px] text-[#6b5e54]" style={{ fontFamily: dmSans }}>Get Directions ↗</span>
                 </div>
               </a>
             </div>
