@@ -51,9 +51,9 @@ export default function Root() {
   useEffect(() => {
     if (lenisRef.current) {
       lenisRef.current.scrollTo(0, { immediate: true });
-    } else {
-      window.scrollTo(0, 0);
     }
+    window.scrollTo(0, 0);
+    window.dispatchEvent(new Event("scroll"));
   }, [location.pathname]);
 
   useEffect(() => {
@@ -188,7 +188,12 @@ export default function Root() {
           <div className="flex flex-col lg:flex-row items-start justify-between gap-12 lg:gap-8">
             <div className="flex flex-col gap-6 max-w-[405px]">
               <Link to="/">
-                <div className="relative" style={{ width: 200, height: 49 }}>
+                <div className="relative footer-logo-container" style={{ width: 200, height: 49 }}>
+                  <style>{`
+                    .footer-logo-container path:not(#Vector):not(#Vector_2) {
+                      fill: #ffffff !important;
+                    }
+                  `}</style>
                   <ClipPathGroup />
                 </div>
               </Link>
@@ -229,7 +234,7 @@ export default function Root() {
             <div className="h-px bg-white/[0.08]" />
             <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
               <span className="text-[14px] text-[#eae7e2] opacity-40" style={{ fontFamily: dmSans }}>
-                © 2024 Vedic Hermitage Ayurmana. All Rights Reserved.
+                © 2026 Vedic Hermitage Ayurmana. All Rights Reserved.
               </span>
               <span className="text-[16px] sm:text-[20px] italic text-[#d4a843] opacity-80" style={{ fontFamily: playfair }}>
                 Healing Through Nature. Rooted in Tradition.

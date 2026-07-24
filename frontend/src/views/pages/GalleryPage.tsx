@@ -33,7 +33,6 @@ const allCards = [
   { img: imgImage11, cat: "Nature", title: "Guest relaxing by pond" },
 ];
 
-const TABS = ["All", "Treatments", "Property", "Nature", "Food", "Ceremonies"] as const;
 const PAGE_SIZE = 12;
 
 // ── Card component ─────────────────────────────────────────────────────────────
@@ -100,18 +99,11 @@ function Lightbox({ src, title, cat, onClose }: { src: string; title: string; ca
 
 // ── Main Page ──────────────────────────────────────────────────────────────────
 export default function GalleryPage() {
-  const [activeTab, setActiveTab] = useState<string>("All");
   const [visible, setVisible] = useState(PAGE_SIZE);
   const [lightbox, setLightbox] = useState<{ src: string; title: string; cat: string } | null>(null);
 
-  const filtered = activeTab === "All" ? allCards : allCards.filter((c) => c.cat === activeTab);
-  const shown = filtered.slice(0, visible);
-  const hasMore = visible < filtered.length;
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    setVisible(PAGE_SIZE);
-  };
+  const shown = allCards.slice(0, visible);
+  const hasMore = visible < allCards.length;
 
   return (
     <div>
@@ -135,36 +127,12 @@ export default function GalleryPage() {
         </motion.div>
       </ParallaxHero>
 
-      {/* ── Filter tabs ── */}
-      <div className="bg-[#faf7f2] sticky top-20 z-40 border-b border-[#e6e2dc] overflow-x-auto scrollbar-none">
-        <div className="flex gap-3 items-center px-6 md:px-20 py-4 md:py-6 min-w-max">
-          {TABS.map((tab) => {
-            const active = activeTab === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => handleTabChange(tab)}
-                className="px-5 py-2.5 md:py-3 rounded-full text-[13px] md:text-[14px] font-semibold uppercase transition-all duration-200 whitespace-nowrap"
-                style={{
-                  fontFamily: dmSans,
-                  background: active ? "#2c4a2e" : "transparent",
-                  color: active ? "white" : "#6b5e54",
-                  border: active ? "none" : "1px solid #d9d1c7",
-                }}
-              >
-                {tab}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* ── Gallery grid ── */}
       <div className="bg-[#faf6f0] px-6 md:px-20 py-12 md:py-[60px]">
         <div className="flex flex-col gap-5">
           <AnimatePresence mode="wait">
             <motion.div
-              key={activeTab}
+              key="gallery"
               className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}

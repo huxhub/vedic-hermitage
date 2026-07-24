@@ -50,9 +50,6 @@ export default function FacilitiesPage() {
                 <div className="w-8 h-px bg-[#c4622d]" />
                 <h3 className="text-[28px] sm:text-[34px] md:text-[40px] font-medium text-[#2d241e]" style={{ fontFamily: playfair }}>{f.title}</h3>
                 <p className="text-[15px] sm:text-[18px] leading-[1.7] text-[#6b5e54]" style={{ fontFamily: dmSans }}>{f.desc}</p>
-                <span className="text-[14px] font-medium underline text-[#c4622d] tracking-[0.5px] cursor-pointer hover:opacity-75 transition-opacity" style={{ fontFamily: dmSans }}>
-                  Discover More
-                </span>
               </motion.div>
             </div>
           </div>

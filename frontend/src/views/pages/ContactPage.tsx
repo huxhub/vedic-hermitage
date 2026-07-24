@@ -5,10 +5,10 @@ import { ParallaxHero, PageHeroContent, playfair, dmSans, fadeUp, dur } from "./
 import imgHero from "@/imports/Frame/2931faa4fb3b24cc54f99029e860b2cd40ee76df.png";
 
 const contactInfo = [
-  { label: "Address", value: "Vedic Hermitage Ayurmana, Thrissur, Kerala – 680 001, India" },
-  { label: "Phone", value: "+91 99999 88888" },
+  { label: "Address", value: "Swastika Ayurveda Foundation , Vedic Hermitage , Edakode Vaniyamkulam , Ottapalam, Palakkad" },
+  { label: "Phone", value: "+91 9061313555 / +91 9207313555" },
   { label: "Email", value: "info@vedichermitage.com" },
-  { label: "Working Hours", value: "Mon–Sat: 9 AM – 6 PM IST" },
+  { label: "Working Hours", value: "Mon–Sun: 8 AM – 8 PM " },
 ];
 
 const navLinks = [
@@ -18,7 +18,7 @@ const navLinks = [
 ];
 
 export default function ContactPage() {
-  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
   const [sent, setSent] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -46,12 +46,13 @@ export default function ContactPage() {
               </div>
             ) : (
               <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-                <div className="flex flex-col sm:flex-row gap-5">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   {[
                     { label: "Full Name", key: "name", type: "text", placeholder: "Enter your name" },
                     { label: "Email Address", key: "email", type: "email", placeholder: "Enter your email" },
+                    { label: "Contact Number", key: "phone", type: "tel", placeholder: "Enter your contact number" },
                   ].map((f) => (
-                    <div key={f.key} className="flex-1 flex flex-col gap-2">
+                    <div key={f.key} className="flex flex-col gap-2">
                       <label className="text-[13px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>{f.label}</label>
                       <input
                         type={f.type}

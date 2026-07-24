@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
 import { Label, CircleCheckSVG, SmallCheckSVG, ClockSVG, playfair, dmSans, fadeUp, dur } from "./shared";
@@ -132,51 +132,60 @@ function HeroParallaxSection() {
     };
   }, []);
 
-  const targetProgressRef = useRef(0);
-  const currentProgressRef = useRef(0);
-  const drawFrameRef = useRef<(index: number) => void>(() => { });
-  const animatingRef = useRef(false);
+  // Draw frame helper function
+  const drawFrame = useCallback((index: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !imagesLoaded) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-  // Track scroll position to update target progress and run smooth animation loop
+    const img = imagesRef.current[index];
+    if (!img) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const canvasWidth = window.innerWidth;
+    const canvasHeight = window.innerHeight;
+
+    if (canvas.width !== canvasWidth * dpr || canvas.height !== canvasHeight * dpr) {
+      canvas.width = canvasWidth * dpr;
+      canvas.height = canvasHeight * dpr;
+      canvas.style.width = `${canvasWidth}px`;
+      canvas.style.height = `${canvasHeight}px`;
+    }
+
+    ctx.save();
+    ctx.scale(dpr, dpr);
+
+    const imgWidth = img.naturalWidth || img.width;
+    const imgHeight = img.naturalHeight || img.height;
+    const imgRatio = imgWidth / imgHeight;
+    const canvasRatio = canvasWidth / canvasHeight;
+
+    let drawWidth = canvasWidth;
+    let drawHeight = canvasHeight;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (imgRatio > canvasRatio) {
+      drawWidth = canvasHeight * imgRatio;
+      offsetX = (canvasWidth - drawWidth) / 2;
+    } else {
+      drawHeight = canvasWidth / imgRatio;
+      offsetY = (canvasHeight - drawHeight) / 2;
+    }
+
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "low";
+    ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+    ctx.restore();
+  }, [imagesLoaded]);
+
+  // Track scroll position and sync frame index
   useEffect(() => {
-    let animId: number | null = null;
-    const lerpSpeed = 0.08; // smooth factor: lower = smoother, higher = faster response
+    let rafId: number | null = null;
 
-    const updateAnimation = () => {
-      const diff = targetProgressRef.current - currentProgressRef.current;
-
-      // If the difference is extremely small, snap to target and stop animation
-      if (Math.abs(diff) < 0.0001) {
-        currentProgressRef.current = targetProgressRef.current;
-        animatingRef.current = false;
-        animId = null;
-      } else {
-        currentProgressRef.current += diff * lerpSpeed;
-        animId = requestAnimationFrame(updateAnimation);
-      }
-
-      const frameIndex = Math.max(0, Math.min(frames.length - 1, Math.round(currentProgressRef.current * (frames.length - 1))));
-
-      if (drawFrameRef.current) {
-        drawFrameRef.current(frameIndex);
-      }
-
-      setActiveFrame((prev) => {
-        if (prev !== frameIndex) {
-          return frameIndex;
-        }
-        return prev;
-      });
-    };
-
-    const startAnimationLoop = () => {
-      if (!animatingRef.current) {
-        animatingRef.current = true;
-        animId = requestAnimationFrame(updateAnimation);
-      }
-    };
-
-    const handleScroll = () => {
+    const renderScrollFrame = () => {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const stickyHeight = window.innerHeight;
@@ -184,21 +193,37 @@ function HeroParallaxSection() {
       const scrolled = window.scrollY;
       const progress = scrollRange > 0 ? Math.max(0, Math.min(1, scrolled / scrollRange)) : 0;
 
-      targetProgressRef.current = progress;
-      startAnimationLoop();
+      const frameIndex = Math.max(0, Math.min(frames.length - 1, Math.round(progress * (frames.length - 1))));
+
+      drawFrame(frameIndex);
+      setActiveFrame((prev) => (prev !== frameIndex ? frameIndex : prev));
+    };
+
+    const handleScroll = () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+      rafId = requestAnimationFrame(renderScrollFrame);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    // Initial call to set target and render first frame
-    handleScroll();
+    window.addEventListener("resize", handleScroll, { passive: true });
+
+    // Render immediately on mount and after scroll resets
+    renderScrollFrame();
+    const t1 = setTimeout(renderScrollFrame, 20);
+    const t2 = setTimeout(renderScrollFrame, 100);
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
-      if (animId) {
-        cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleScroll);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
       }
     };
-  }, [imagesLoaded]);
+  }, [imagesLoaded, drawFrame]);
 
   // Update root attribute to control navbar visibility in CSS
   useEffect(() => {
@@ -207,84 +232,6 @@ function HeroParallaxSection() {
       document.documentElement.removeAttribute("data-active-frame");
     };
   }, [activeFrame]);
-
-  // Define drawFrame function and save to ref to avoid stale closure issues
-  useEffect(() => {
-    drawFrameRef.current = (index: number) => {
-      const canvas = canvasRef.current;
-      if (!canvas || !imagesLoaded) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      const img = imagesRef.current[index];
-      if (!img) return;
-
-      const dpr = dprRef.current;
-      const canvasWidth = canvasWidthRef.current;
-      const canvasHeight = canvasHeightRef.current;
-
-      ctx.save();
-      ctx.scale(dpr, dpr);
-
-      const imgWidth = img.naturalWidth || img.width;
-      const imgHeight = img.naturalHeight || img.height;
-      const imgRatio = imgWidth / imgHeight;
-      const canvasRatio = canvasWidth / canvasHeight;
-
-      let drawWidth = canvasWidth;
-      let drawHeight = canvasHeight;
-      let offsetX = 0;
-      let offsetY = 0;
-
-      if (imgRatio > canvasRatio) {
-        drawWidth = canvasHeight * imgRatio;
-        offsetX = (canvasWidth - drawWidth) / 2;
-      } else {
-        drawHeight = canvasWidth / imgRatio;
-        offsetY = (canvasHeight - drawHeight) / 2;
-      }
-
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "low";
-      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
-      ctx.restore();
-    };
-  }, [imagesLoaded]);
-
-  // Handle canvas sizing on mount and resize
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const handleResize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      const canvasWidth = window.innerWidth;
-      const canvasHeight = window.innerHeight;
-
-      canvasWidthRef.current = canvasWidth;
-      canvasHeightRef.current = canvasHeight;
-      dprRef.current = dpr;
-
-      canvas.width = canvasWidth * dpr;
-      canvas.height = canvasHeight * dpr;
-      canvas.style.width = `${canvasWidth}px`;
-      canvas.style.height = `${canvasHeight}px`;
-
-      // Redraw the current frame immediately on resize
-      const frameIndex = Math.max(0, Math.min(frames.length - 1, Math.round(currentProgressRef.current * (frames.length - 1))));
-      if (drawFrameRef.current) {
-        drawFrameRef.current(frameIndex);
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize();
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [imagesLoaded]);
 
   return (
     <div ref={containerRef} className="relative w-full" style={{ height: "300vh", marginTop: "-80px" }}>
@@ -328,7 +275,7 @@ function HeroParallaxSection() {
           className="absolute pointer-events-none z-10 rounded-full"
           style={{
             left: "91.9%",
-            top: "91%",
+            top: "86%",
             width: "90px",
             height: "90px",
             background: "#000000",
