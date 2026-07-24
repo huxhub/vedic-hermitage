@@ -1,0 +1,23 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* Hide the entire navbar initially for the first 3 frames (activeFrame = 0, 1, 2) */
+html[data-active-frame="0"] header,
+html[data-active-frame="1"] header,
+html[data-active-frame="2"] header {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-20px);
+}
+
+/* On the 4th frame (activeFrame = 3), show the white navbar background but hide its content items */
+html[data-active-frame="3"] header > * {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Ensure smooth transition for header content items */
+header > * {
+  transition: opacity 0.3s ease;
+}
