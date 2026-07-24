@@ -6,9 +6,9 @@ import svgPaths from "@/imports/AyurvedaLandingPage-2/svg-se7b6a4pns";
 import ClipPathGroup from "@/imports/ClipPathGroup/index";
 
 // ── Images ────────────────────────────────────────────────────────────────────
-const frameGlob = import.meta.glob("../../imports/hero video frames/*.jpg", { eager: true, import: "default" });
+const frameGlob = import.meta.glob("../../imports/hero video frames/*.webp", { eager: true, import: "default" });
 const getNumber = (path: string) => {
-  const match = path.match(/_(\d+)\.jpg$/);
+  const match = path.match(/_(\d+)\.webp$/);
   return match ? parseInt(match[1], 10) : 0;
 };
 const frames = Object.entries(frameGlob)
@@ -100,35 +100,49 @@ function HeroParallaxSection() {
   const canvasHeightRef = useRef(window.innerHeight);
   const dprRef = useRef(window.devicePixelRatio || 1);
 
-  // Preload frames in the background as actual HTMLImageElement references
+  // Fast parallelized preloading with async bitmap decoding
   useEffect(() => {
-    let index = 0;
-    let loadedCount = 0;
     let isCancelled = false;
+    let loadedCount = 0;
 
-    const preloadNext = () => {
-      if (index >= frames.length || isCancelled) return;
+    const loadSingleFrame = async (idx: number) => {
+      if (isCancelled || idx >= frames.length) return;
       const img = new Image();
-      img.src = frames[index];
-      const next = () => {
-        if (!isCancelled) {
-          imagesRef.current[index] = img;
-          loadedCount++;
-          if (loadedCount === frames.length) {
-            setImagesLoaded(true);
-          }
-          index++;
-          preloadNext();
+      img.src = frames[idx];
+      try {
+        if (img.decode) {
+          await img.decode();
         }
-      };
-      img.onload = next;
-      img.onerror = next;
+      } catch (e) {
+        // Fallback for decode failure
+      }
+      if (!isCancelled) {
+        imagesRef.current[idx] = img;
+        loadedCount++;
+        if (loadedCount === 1) {
+          setImagesLoaded(true);
+        }
+      }
     };
 
-    const timer = setTimeout(preloadNext, 100);
+    // Load initial 4 frames immediately for instant zero-delay render
+    const loadAll = async () => {
+      await Promise.all([0, 1, 2, 3].map(loadSingleFrame));
+      if (isCancelled) return;
+
+      // Batch load the rest in parallel chunks of 6
+      const chunkSize = 6;
+      for (let i = 4; i < frames.length; i += chunkSize) {
+        if (isCancelled) break;
+        const chunk = Array.from({ length: Math.min(chunkSize, frames.length - i) }, (_, k) => i + k);
+        await Promise.all(chunk.map(loadSingleFrame));
+      }
+    };
+
+    loadAll();
+
     return () => {
       isCancelled = true;
-      clearTimeout(timer);
     };
   }, []);
 
