@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { ParallaxHero, PageHeroContent, playfair, dmSans, fadeUp, dur } from "./shared";
+import { sendContactEmail } from "@/utils/sendEmail";
 
 import imgHero from "@/imports/Frame/2931faa4fb3b24cc54f99029e860b2cd40ee76df.png";
 import mapSvg from "@/imports/contact/map.svg";
@@ -22,11 +23,28 @@ const navLinks = [
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await sendContactEmail(form);
+      if (res.success) {
+        setSent(true);
+      } else {
+        setError(res.message || "Failed to send message. Please try again.");
+      }
+    } catch (err) {
+      console.error("Failed to send message:", err);
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -49,18 +67,23 @@ export default function ContactPage() {
               </div>
             ) : (
               <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm font-sans">
+                    {error}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                   {[
-                    { label: "Full Name", key: "name", type: "text", placeholder: "Enter your name" },
-                    { label: "Email Address", key: "email", type: "email", placeholder: "Enter your email" },
-                    { label: "Contact Number", key: "phone", type: "tel", placeholder: "Enter your contact number" },
+                    { label: "Full Name", key: "name", type: "text", placeholder: "Enter your name", required: true },
+                    { label: "Email Address (Optional)", key: "email", type: "email", placeholder: "Enter your email", required: false },
+                    { label: "Contact Number", key: "phone", type: "tel", placeholder: "Enter your contact number", required: true },
                   ].map((f) => (
                     <div key={f.key} className="flex flex-col gap-2">
                       <label className="text-[13px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>{f.label}</label>
                       <input
                         type={f.type}
                         placeholder={f.placeholder}
-                        required
+                        required={f.required}
                         value={form[f.key as keyof typeof form]}
                         onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
                         className="bg-[#faf6f0] border border-[#d9d1c7] rounded p-4 text-[14px] text-[#2d241e] outline-none focus:border-[#c4622d] transition-colors"
@@ -83,10 +106,11 @@ export default function ContactPage() {
                 </div>
                 <button
                   type="submit"
-                  className="self-start bg-[#c4622d] text-white px-8 py-3 rounded-md text-[14px] font-semibold uppercase hover:bg-[#b5562a] transition-colors"
+                  disabled={loading}
+                  className="self-start bg-[#c4622d] text-white px-8 py-3 rounded-md text-[14px] font-semibold uppercase hover:bg-[#b5562a] transition-colors disabled:opacity-50 cursor-pointer"
                   style={{ fontFamily: dmSans }}
                 >
-                  Send Message
+                  {loading ? "Sending..." : "Send Message"}
                 </button>
               </form>
             )}
