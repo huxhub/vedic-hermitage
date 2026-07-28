@@ -100,6 +100,30 @@ function SelectionSummary({
   selectedPkg: (typeof packages)[0] | undefined;
   guests: string;
 }) {
+  const [contactNumber, setContactNumber] = useState("+91 90613 13555");
+  const [whatsappNumber, setWhatsappNumber] = useState("+91 90613 13555");
+
+  useEffect(() => {
+    const loadSettings = () => {
+      fetch("/api/settings")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.settings) {
+            if (data.settings.contact_number) setContactNumber(data.settings.contact_number);
+            if (data.settings.whatsapp_number) setWhatsappNumber(data.settings.whatsapp_number);
+          }
+        })
+        .catch((err) => console.warn("Could not load settings:", err));
+    };
+    loadSettings();
+    window.addEventListener("vedic-settings-updated", loadSettings);
+    return () => window.removeEventListener("vedic-settings-updated", loadSettings);
+  }, []);
+
+  const numToUse = whatsappNumber.replace(/[^\d]/g, "") || "919061313555";
+  const defaultMessage = encodeURIComponent("Hello! I would like to inquire about booking a retreat at Vedic Hermitage.");
+  const whatsappUrl = `https://wa.me/${numToUse}?text=${defaultMessage}`;
+
   return (
     <div className="flex flex-col gap-6 sm:gap-8 w-full lg:w-[400px] shrink-0">
       {/* Summary card */}
@@ -136,7 +160,7 @@ function SelectionSummary({
           Need Help?
         </span>
         <p className="text-[12px] text-[#2d241e] leading-relaxed" style={{ fontFamily: dmSans }}>
-          Call us at +91 99999 88888 or WhatsApp us for assistance.
+          Call us at <a href={`tel:${contactNumber}`} className="font-semibold text-[#c4622d] hover:underline">{contactNumber}</a> or <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#2c4a2e] hover:underline">WhatsApp us</a> for assistance.
         </p>
       </div>
     </div>
