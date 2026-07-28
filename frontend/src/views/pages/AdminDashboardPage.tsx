@@ -89,7 +89,6 @@ export default function AdminDashboardPage() {
 
   // Admin Account Credentials Form State
   const [credForm, setCredForm] = useState({
-    current_password: "",
     new_username: "admin",
     new_password: "",
     confirm_password: "",
@@ -302,22 +301,21 @@ export default function AdminDashboardPage() {
       setCredAlert({ type: "error", text: "New password and Confirm password do not match!" });
       return;
     }
-    if (!credForm.current_password || !credForm.new_username || !credForm.new_password) {
-      setCredAlert({ type: "error", text: "All credential fields are required." });
+    if (!credForm.new_username || !credForm.new_password) {
+      setCredAlert({ type: "error", text: "New Username and New Password are required." });
       return;
     }
     setSavingCreds(true);
     const res = await updateAdminCredentials({
-      current_password: credForm.current_password,
       new_username: credForm.new_username,
       new_password: credForm.new_password,
     });
     setSavingCreds(false);
     if (res.success) {
       setCredAlert({ type: "success", text: res.message || "Admin username and password updated successfully!" });
-      setCredForm((prev) => ({ ...prev, current_password: "", new_password: "", confirm_password: "" }));
+      setCredForm((prev) => ({ ...prev, new_password: "", confirm_password: "" }));
     } else {
-      setCredAlert({ type: "error", text: res.message || "Current password is incorrect." });
+      setCredAlert({ type: "error", text: res.message || "Failed to update admin credentials." });
     }
   };
 
@@ -1217,24 +1215,6 @@ export default function AdminDashboardPage() {
                             onChange={(e) => setCredForm({ ...credForm, new_username: e.target.value })}
                             required
                             className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl py-3 pl-10 pr-3.5 text-[14px] text-[#2d241e] font-semibold outline-none focus:border-[#c4622d] focus:bg-white transition-all w-full"
-                            style={{ fontFamily: dmSans }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
-                          Current Password (for verification) *
-                        </label>
-                        <div className="relative">
-                          <Lock className="w-4 h-4 text-[#998b7e] absolute left-3.5 top-3.5" />
-                          <input
-                            type="password"
-                            placeholder="Enter current password"
-                            value={credForm.current_password}
-                            onChange={(e) => setCredForm({ ...credForm, current_password: e.target.value })}
-                            required
-                            className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl py-3 pl-10 pr-3.5 text-[14px] text-[#2d241e] outline-none focus:border-[#c4622d] focus:bg-white transition-all w-full"
                             style={{ fontFamily: dmSans }}
                           />
                         </div>

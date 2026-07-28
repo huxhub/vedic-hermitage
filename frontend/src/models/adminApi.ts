@@ -480,7 +480,6 @@ export async function updateSiteSettings(settings: SiteSettings): Promise<{ succ
 }
 
 export async function updateAdminCredentials(payload: {
-  current_password: string;
   new_username: string;
   new_password: string;
 }): Promise<{ success: boolean; message?: string }> {

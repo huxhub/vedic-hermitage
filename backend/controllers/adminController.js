@@ -488,32 +488,24 @@ export const updateSettings = async (req, res) => {
 
 // Update Admin Username & Password
 export const updateAdminCredentials = async (req, res) => {
-  const { current_password, new_username, new_password } = req.body;
-  if (!current_password || !new_username || !new_password) {
+  const { new_username, new_password } = req.body;
+  if (!new_username || !new_password) {
     return res.status(400).json({
       success: false,
-      message: 'Current password, new username, and new password are required.',
+      message: 'New username and new password are required.',
     });
   }
 
   try {
     const pool = await getDbPool();
-    // Verify current password
-    const [rows] = await pool.query('SELECT * FROM admin_users WHERE password = ? LIMIT 1', [current_password]);
-    if (rows.length === 0) {
-      return res.status(401).json({ success: false, message: 'Incorrect current password.' });
-    }
-
-    const adminId = rows[0].id;
-    await pool.query('UPDATE admin_users SET username = ?, password = ? WHERE id = ?', [
+    await pool.query('UPDATE admin_users SET username = ?, password = ? WHERE id = 1', [
       new_username,
       new_password,
-      adminId,
     ]);
 
     return res.status(200).json({
       success: true,
-      message: 'Admin credentials updated successfully!',
+      message: 'Admin login credentials updated successfully!',
       username: new_username,
     });
   } catch (err) {
