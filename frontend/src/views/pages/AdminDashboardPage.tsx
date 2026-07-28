@@ -13,14 +13,17 @@ import {
   Sparkles,
   User,
   MapPin,
-  Database,
-  Activity,
-  IndianRupee,
+  X,
+  Upload,
+  Image as ImageIcon,
   Layers,
+  Clock,
 } from "lucide-react";
 import {
   fetchPackages,
   updatePackages,
+  addNewPackage,
+  deletePackage,
   fetchFeedbacks,
   addFeedback,
   deleteFeedback,
@@ -37,10 +40,20 @@ export default function AdminDashboardPage() {
   // Package Management State
   const [pkgs, setPkgs] = useState<PackageItem[]>([]);
   const [savingPkgs, setSavingPkgs] = useState(false);
+  const [isAddPkgOpen, setIsAddPkgOpen] = useState(false);
+  const [newPkg, setNewPkg] = useState({
+    title: "",
+    subtitle: "",
+    price: "",
+    duration: "7 Days",
+    itemsStr: "",
+  });
+  const [addingPkg, setAddingPkg] = useState(false);
 
   // Feedback Management State
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
-  const [newFb, setNewFb] = useState({ name: "", location: "", quote: "", rating: 5 });
+  const [newFb, setNewFb] = useState({ name: "", location: "", quote: "", rating: 5, avatar: "" });
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [savingFb, setSavingFb] = useState(false);
 
   useEffect(() => {
@@ -77,6 +90,59 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleCreatePackage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPkg.title || !newPkg.price) return;
+
+    setAddingPkg(true);
+    try {
+      const itemsList = newPkg.itemsStr
+        .split("\n")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const res = await addNewPackage({
+        title: newPkg.title,
+        price: newPkg.price,
+        subtitle: newPkg.subtitle || "Custom Program",
+        duration: newPkg.duration,
+        items: itemsList.length > 0 ? itemsList : ["Full Panchakarma Protocol", "Physician Consultation", "Sattvic Meals"],
+      });
+
+      if (res.success && res.package) {
+        setPkgs((prev) => [...prev, res.package!]);
+        setNewPkg({ title: "", subtitle: "", price: "", duration: "7 Days", itemsStr: "" });
+        setIsAddPkgOpen(false);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAddingPkg(false);
+    }
+  };
+
+  const handleDeletePkg = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this package?")) return;
+    const ok = await deletePackage(id);
+    if (ok) {
+      setPkgs((prev) => prev.filter((p) => p.id !== id));
+    }
+  };
+
+  // Image File Picker Handler for Testimonials
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setAvatarPreview(base64String);
+        setNewFb((prev) => ({ ...prev, avatar: base64String }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleAddFeedback = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFb.name || !newFb.quote) return;
@@ -86,7 +152,8 @@ export default function AdminDashboardPage() {
       const res = await addFeedback(newFb);
       if (res.success && res.feedback) {
         setFeedbacks((prev) => [res.feedback!, ...prev]);
-        setNewFb({ name: "", location: "", quote: "", rating: 5 });
+        setNewFb({ name: "", location: "", quote: "", rating: 5, avatar: "" });
+        setAvatarPreview("");
       }
     } catch (err) {
       console.error(err);
@@ -104,7 +171,7 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f1ea] flex">
+    <div className="min-h-screen bg-[#f4f1ea] flex relative">
       {/* ── Sidebar ── */}
       <aside className="w-64 lg:w-72 bg-[#1b331c] text-white flex flex-col justify-between shrink-0 shadow-2xl border-r border-[#264528] fixed lg:sticky top-0 h-screen z-30">
         <div className="flex flex-col">
@@ -214,91 +281,72 @@ export default function AdminDashboardPage() {
             </h1>
             <p className="text-[13px] text-[#786c62]" style={{ fontFamily: dmSans }}>
               {activeTab === "packages"
-                ? "Configure pricing for 7-Day, 14-Day, and 21-Day retreat packages."
-                : "Manage customer reviews displayed on the website testimonials marquee."}
+                ? "Configure pricing and add new retreat packages."
+                : "Manage customer reviews and custom testimonial photos."}
             </p>
           </div>
 
           {activeTab === "packages" && (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleSavePrices}
-              disabled={savingPkgs}
-              className="flex items-center gap-2 bg-[#c4622d] hover:bg-[#b5562a] text-white px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md disabled:opacity-50 cursor-pointer"
-              style={{ fontFamily: dmSans }}
-            >
-              <Save className="w-4 h-4" />
-              <span>{savingPkgs ? "Saving..." : "Save Package Prices"}</span>
-            </motion.button>
+            <div className="flex items-center gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setIsAddPkgOpen(true)}
+                className="flex items-center gap-2 bg-[#2c4a2e] hover:bg-[#203722] text-white px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md cursor-pointer"
+                style={{ fontFamily: dmSans }}
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add New Package</span>
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSavePrices}
+                disabled={savingPkgs}
+                className="flex items-center gap-2 bg-[#c4622d] hover:bg-[#b5562a] text-white px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md disabled:opacity-50 cursor-pointer"
+                style={{ fontFamily: dmSans }}
+              >
+                <Save className="w-4 h-4" />
+                <span>{savingPkgs ? "Saving..." : "Save Package Prices"}</span>
+              </motion.button>
+            </div>
           )}
         </header>
 
         {/* Dashboard Body Content */}
         <main className="p-8 flex-1 max-w-[1240px] w-full mx-auto flex flex-col gap-8">
-          {/* Top Quick Metrics Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between">
-              <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
-                  Active Packages
-                </span>
-                <span className="text-[22px] font-bold text-[#2d241e]" style={{ fontFamily: dmSans }}>
-                  {pkgs.length || 3} Retreats
-                </span>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-[#faf0ea] text-[#c4622d] flex items-center justify-center">
-                <Layers className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between">
-              <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
-                  Customer Reviews
-                </span>
-                <span className="text-[22px] font-bold text-[#2d241e]" style={{ fontFamily: dmSans }}>
-                  {feedbacks.length} Testimonials
-                </span>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-[#f0f5f1] text-[#2c4a2e] flex items-center justify-center">
-                <MessageSquare className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between">
-              <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
-                  Database Status
-                </span>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]" />
-                  <span className="text-[14px] font-semibold text-[#10b981]" style={{ fontFamily: dmSans }}>
-                    MySQL Connected
+          {/* Section Specific Metric Card */}
+          <div className="w-full">
+            {activeTab === "packages" ? (
+              <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between max-w-sm">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
+                    Active Packages
+                  </span>
+                  <span className="text-[22px] font-bold text-[#2d241e]" style={{ fontFamily: dmSans }}>
+                    {pkgs.length} Retreat Programmes
                   </span>
                 </div>
-              </div>
-              <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <Database className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between">
-              <div className="flex flex-col gap-1">
-                <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
-                  Frontend Sync
-                </span>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <Activity className="w-4 h-4 text-[#c4622d]" />
-                  <span className="text-[14px] font-semibold text-[#2d241e]" style={{ fontFamily: dmSans }}>
-                    Live Auto Sync
-                  </span>
+                <div className="w-11 h-11 rounded-xl bg-[#faf0ea] text-[#c4622d] flex items-center justify-center">
+                  <Layers className="w-5 h-5" />
                 </div>
               </div>
-              <div className="w-11 h-11 rounded-xl bg-[#faf0ea] text-[#c4622d] flex items-center justify-center">
-                <Sparkles className="w-5 h-5" />
+            ) : (
+              <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between max-w-sm">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
+                    Customer Reviews
+                  </span>
+                  <span className="text-[22px] font-bold text-[#2d241e]" style={{ fontFamily: dmSans }}>
+                    {feedbacks.length} Testimonials
+                  </span>
+                </div>
+                <div className="w-11 h-11 rounded-xl bg-[#f0f5f1] text-[#2c4a2e] flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Main Tab Content */}
@@ -317,16 +365,20 @@ export default function AdminDashboardPage() {
                   {pkgs.map((pkg) => (
                     <div
                       key={pkg.id}
-                      className="bg-white p-6 rounded-2xl border border-[#e2ded8] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between gap-6"
+                      className="bg-white p-6 rounded-2xl border border-[#e2ded8] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between gap-6 relative group"
                     >
                       <div className="flex flex-col gap-4">
                         <div className="flex items-center justify-between">
                           <span className="text-[11px] font-bold text-[#c4622d] uppercase tracking-wider bg-[#faf0ea] border border-[#f5dfd5] px-3 py-1 rounded-full">
                             {pkg.subtitle || pkg.label}
                           </span>
-                          <span className="text-[12px] font-semibold text-[#87786c]" style={{ fontFamily: dmSans }}>
-                            {pkg.duration || "7 Days"}
-                          </span>
+                          <button
+                            onClick={() => handleDeletePkg(pkg.id)}
+                            className="text-[#998b7e] hover:text-red-600 transition-colors p-1 cursor-pointer"
+                            title="Delete Package"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
 
                         <h3 className="text-[20px] font-medium text-[#2d241e]" style={{ fontFamily: playfair }}>
@@ -393,7 +445,7 @@ export default function AdminDashboardPage() {
                       </h3>
                     </div>
                     <span className="text-[12px] text-[#786c62]" style={{ fontFamily: dmSans }}>
-                      Will render live on home page marquee
+                      Renders live on home page marquee
                     </span>
                   </div>
 
@@ -451,6 +503,37 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
 
+                    {/* Image Upload Input */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
+                        Customer Photo / Avatar (Image Upload)
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 bg-[#faf8f5] border border-[#d9d1c7] hover:border-[#c4622d] text-[#2d241e] px-4 py-2.5 rounded-xl text-[13px] font-semibold cursor-pointer transition-colors">
+                          <Upload className="w-4 h-4 text-[#c4622d]" />
+                          <span>Choose Photo...</span>
+                          <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                        </label>
+
+                        {avatarPreview && (
+                          <div className="flex items-center gap-3 bg-[#faf0ea] p-1.5 pr-4 rounded-full border border-[#f5dfd5]">
+                            <img src={avatarPreview} alt="Preview" className="w-8 h-8 rounded-full object-cover" />
+                            <span className="text-[12px] font-semibold text-[#c4622d]">Photo Uploaded</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAvatarPreview("");
+                                setNewFb((prev) => ({ ...prev, avatar: "" }));
+                              }}
+                              className="text-[#998b7e] hover:text-red-600"
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
                         Review Quote *
@@ -495,9 +578,13 @@ export default function AdminDashboardPage() {
                         <div className="flex flex-col gap-3">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-[#faf0ea] text-[#c4622d] font-bold flex items-center justify-center text-sm shadow-xs">
-                                {fb.name.charAt(0)}
-                              </div>
+                              {fb.avatar ? (
+                                <img src={fb.avatar} alt={fb.name} className="w-10 h-10 rounded-full object-cover shadow-xs" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-full bg-[#faf0ea] text-[#c4622d] font-bold flex items-center justify-center text-sm shadow-xs">
+                                  {fb.name.charAt(0)}
+                                </div>
+                              )}
                               <div>
                                 <span className="font-semibold text-[#2d241e] text-[15px] block" style={{ fontFamily: dmSans }}>
                                   {fb.name}
@@ -540,6 +627,153 @@ export default function AdminDashboardPage() {
           </AnimatePresence>
         </main>
       </div>
+
+      {/* ── Right-Side Drawer Form for Adding New Package ── */}
+      <AnimatePresence>
+        {isAddPkgOpen && (
+          <>
+            {/* Backdrop Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAddPkgOpen(false)}
+              className="fixed inset-0 bg-black z-40"
+            />
+
+            {/* Slide-over Panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl flex flex-col justify-between border-l border-[#e2ded8]"
+            >
+              <div className="flex flex-col flex-1 overflow-y-auto p-6 gap-6">
+                {/* Drawer Header */}
+                <div className="flex items-center justify-between border-b border-[#f0eae1] pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-[#c4622d]/10 text-[#c4622d] flex items-center justify-center">
+                      <Package className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-[20px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
+                      Add New Package
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setIsAddPkgOpen(false)}
+                    className="w-8 h-8 rounded-full bg-[#faf8f5] hover:bg-[#f0eae1] flex items-center justify-center text-[#786c62] transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Form Fields */}
+                <form id="add-pkg-form" onSubmit={handleCreatePackage} className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
+                      Package Title *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 10-Day Holistic Rejuvenation"
+                      value={newPkg.title}
+                      onChange={(e) => setNewPkg({ ...newPkg, title: e.target.value })}
+                      required
+                      className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl p-3 text-[14px] text-[#2d241e] outline-none focus:border-[#c4622d] focus:bg-white transition-all"
+                      style={{ fontFamily: dmSans }}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
+                      Subtitle / Label Tag
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Deep Detox & Healing"
+                      value={newPkg.subtitle}
+                      onChange={(e) => setNewPkg({ ...newPkg, subtitle: e.target.value })}
+                      className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl p-3 text-[14px] text-[#2d241e] outline-none focus:border-[#c4622d] focus:bg-white transition-all"
+                      style={{ fontFamily: dmSans }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
+                        Package Price (Amount) *
+                      </label>
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3 text-[#87786c] font-bold text-sm select-none">₹</span>
+                        <input
+                          type="text"
+                          placeholder="65,000"
+                          value={newPkg.price}
+                          onChange={(e) => setNewPkg({ ...newPkg, price: e.target.value })}
+                          required
+                          className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl py-3 pl-7 pr-3 text-[14px] font-bold text-[#2d241e] outline-none focus:border-[#c4622d] focus:bg-white transition-all w-full"
+                          style={{ fontFamily: dmSans }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
+                        Duration
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. 10 Days"
+                        value={newPkg.duration}
+                        onChange={(e) => setNewPkg({ ...newPkg, duration: e.target.value })}
+                        className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl p-3 text-[14px] text-[#2d241e] outline-none focus:border-[#c4622d] focus:bg-white transition-all"
+                        style={{ fontFamily: dmSans }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
+                      Included Features (One per line)
+                    </label>
+                    <textarea
+                      rows={5}
+                      placeholder={"Full Panchakarma Protocol\nDaily Abhyanga Massage\nSatvik Meals & Accommodation\nPhysician Consultations"}
+                      value={newPkg.itemsStr}
+                      onChange={(e) => setNewPkg({ ...newPkg, itemsStr: e.target.value })}
+                      className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl p-3.5 text-[13px] text-[#2d241e] outline-none focus:border-[#c4622d] focus:bg-white transition-all resize-none"
+                      style={{ fontFamily: dmSans }}
+                    />
+                  </div>
+                </form>
+              </div>
+
+              {/* Drawer Footer Buttons */}
+              <div className="p-6 border-t border-[#f0eae1] bg-[#faf8f5] flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAddPkgOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-[13px] font-semibold text-[#786c62] hover:bg-[#e2ded8] transition-colors cursor-pointer"
+                  style={{ fontFamily: dmSans }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  form="add-pkg-form"
+                  disabled={addingPkg}
+                  className="flex items-center gap-2 bg-[#c4622d] hover:bg-[#b5562a] text-white px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md disabled:opacity-50 cursor-pointer"
+                  style={{ fontFamily: dmSans }}
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>{addingPkg ? "Adding..." : "Add Package"}</span>
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

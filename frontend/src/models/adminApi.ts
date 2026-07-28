@@ -68,8 +68,48 @@ export async function fetchPackages(): Promise<PackageItem[]> {
   return localPkgs;
 }
 
+export async function addNewPackage(pkgData: {
+  title: string;
+  price: string;
+  subtitle?: string;
+  duration?: string;
+  items?: string[];
+}): Promise<{ success: boolean; package?: PackageItem; message?: string }> {
+  const newPkg: PackageItem = {
+    id: "pkg_" + Date.now(),
+    title: pkgData.title,
+    price: pkgData.price.startsWith("₹") ? pkgData.price : `₹${pkgData.price}`,
+    subtitle: pkgData.subtitle || "Custom Program",
+    label: pkgData.subtitle || "Custom Program",
+    duration: pkgData.duration || "7 Days",
+    items: pkgData.items || [],
+  };
+
+  // Instantly update local cache
+  const cached = localStorage.getItem(PKGS_KEY);
+  let localPkgs: PackageItem[] = cached ? JSON.parse(cached) : [];
+  localPkgs = [...localPkgs, newPkg];
+  localStorage.setItem(PKGS_KEY, JSON.stringify(localPkgs));
+
+  window.dispatchEvent(new CustomEvent("vedic-packages-updated", { detail: localPkgs }));
+
+  try {
+    const res = await fetch("/api/packages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(pkgData),
+    });
+    const data = await res.json();
+    if (res.ok && data.package) {
+      return { success: true, package: data.package };
+    }
+  } catch (err) {
+    console.error("Error creating package on server:", err);
+  }
+  return { success: true, package: newPkg };
+}
+
 export async function updatePackages(packages: Partial<PackageItem>[]): Promise<{ success: boolean; message: string }> {
-  // 1. Instantly update local cache
   const cached = localStorage.getItem(PKGS_KEY);
   let localPkgs: PackageItem[] = cached ? JSON.parse(cached) : [];
 
@@ -78,14 +118,11 @@ export async function updatePackages(packages: Partial<PackageItem>[]): Promise<
     return match ? { ...p, ...match } : p;
   });
 
-  // If localPkgs was empty, fill with packages
   const finalPkgs = updatedPkgs.length > 0 ? updatedPkgs : (packages as PackageItem[]);
   localStorage.setItem(PKGS_KEY, JSON.stringify(finalPkgs));
 
-  // 2. Dispatch custom event so open tabs/components update instantly
   window.dispatchEvent(new CustomEvent("vedic-packages-updated", { detail: finalPkgs }));
 
-  // 3. Send to backend MySQL API
   try {
     const res = await fetch("/api/packages", {
       method: "PUT",
@@ -98,6 +135,24 @@ export async function updatePackages(packages: Partial<PackageItem>[]): Promise<
     console.error("Error updating packages on server:", err);
     return { success: true, message: "Updated locally." };
   }
+}
+
+export async function deletePackage(id: string): Promise<boolean> {
+  const cached = localStorage.getItem(PKGS_KEY);
+  let localPkgs: PackageItem[] = cached ? JSON.parse(cached) : [];
+  localPkgs = localPkgs.filter((p) => p.id !== id);
+  localStorage.setItem(PKGS_KEY, JSON.stringify(localPkgs));
+
+  window.dispatchEvent(new CustomEvent("vedic-packages-updated", { detail: localPkgs }));
+
+  try {
+    await fetch(`/api/packages/${id}`, {
+      method: "DELETE",
+    });
+  } catch (err) {
+    console.error("Error deleting package on server:", err);
+  }
+  return true;
 }
 
 export async function fetchFeedbacks(): Promise<FeedbackItem[]> {
@@ -117,16 +172,22 @@ export async function fetchFeedbacks(): Promise<FeedbackItem[]> {
   return localFbs;
 }
 
-export async function addFeedback(feedback: { name: string; location?: string; quote: string; rating?: number }): Promise<{ success: boolean; feedback?: FeedbackItem; message?: string }> {
+export async function addFeedback(feedback: {
+  name: string;
+  location?: string;
+  quote: string;
+  rating?: number;
+  avatar?: string;
+}): Promise<{ success: boolean; feedback?: FeedbackItem; message?: string }> {
   const newFb: FeedbackItem = {
     id: Date.now(),
     name: feedback.name,
     location: feedback.location || "",
     quote: feedback.quote,
     rating: feedback.rating || 5,
+    avatar: feedback.avatar || "",
   };
 
-  // Instantly update local cache
   const cached = localStorage.getItem(FBS_KEY);
   let localFbs: FeedbackItem[] = cached ? JSON.parse(cached) : [];
   localFbs = [newFb, ...localFbs];

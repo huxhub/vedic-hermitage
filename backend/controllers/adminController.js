@@ -46,6 +46,44 @@ export const getPackages = async (req, res) => {
   }
 };
 
+// Add New Package
+export const addPackage = async (req, res) => {
+  const { title, price, subtitle, duration, items } = req.body;
+  if (!title || !price) {
+    return res.status(400).json({ success: false, message: 'Title and price are required.' });
+  }
+
+  try {
+    const pool = await getDbPool();
+    const id = 'pkg_' + Date.now();
+    const numericPrice = parseInt(String(price).replace(/[^\d]/g, ''), 10) || 0;
+    const itemsArray = Array.isArray(items) ? items : (typeof items === 'string' ? items.split(',').map((s) => s.trim()) : []);
+    const itemsJson = JSON.stringify(itemsArray);
+
+    await pool.query(
+      'INSERT INTO packages (id, label, title, price, price_numeric, duration, subtitle, items) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, subtitle || 'Custom Retreat', title, price, numericPrice, duration || '7 Days', subtitle || 'Custom Retreat', itemsJson]
+    );
+
+    return res.status(200).json({
+      success: true,
+      package: {
+        id,
+        label: subtitle || 'Custom Retreat',
+        title,
+        price,
+        price_numeric: numericPrice,
+        duration: duration || '7 Days',
+        subtitle: subtitle || 'Custom Retreat',
+        items: itemsArray,
+      },
+    });
+  } catch (err) {
+    console.error('[Add Package Error]:', err);
+    return res.status(500).json({ success: false, message: 'Failed to add package to database.' });
+  }
+};
+
 // Update Package Prices
 export const updatePackages = async (req, res) => {
   const { packages } = req.body;
@@ -69,6 +107,19 @@ export const updatePackages = async (req, res) => {
   }
 };
 
+// Delete Package
+export const deletePackage = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const pool = await getDbPool();
+    await pool.query('DELETE FROM packages WHERE id = ?', [id]);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('[Delete Package Error]:', err);
+    return res.status(500).json({ success: false, message: 'Failed to delete package.' });
+  }
+};
+
 // Get All Customer Feedbacks
 export const getFeedbacks = async (req, res) => {
   try {
@@ -83,7 +134,7 @@ export const getFeedbacks = async (req, res) => {
 
 // Add New Customer Feedback
 export const addFeedback = async (req, res) => {
-  const { name, location, quote, rating } = req.body;
+  const { name, location, quote, rating, avatar } = req.body;
   if (!name || !quote) {
     return res.status(400).json({ success: false, message: 'Name and quote are required.' });
   }
@@ -91,8 +142,8 @@ export const addFeedback = async (req, res) => {
   try {
     const pool = await getDbPool();
     const [result] = await pool.query(
-      'INSERT INTO feedbacks (name, location, quote, rating) VALUES (?, ?, ?, ?)',
-      [name, location || '', quote, rating || 5]
+      'INSERT INTO feedbacks (name, location, quote, rating, avatar) VALUES (?, ?, ?, ?, ?)',
+      [name, location || '', quote, rating || 5, avatar || '']
     );
 
     return res.status(200).json({
@@ -103,6 +154,7 @@ export const addFeedback = async (req, res) => {
         location,
         quote,
         rating: rating || 5,
+        avatar: avatar || '',
       },
     });
   } catch (err) {

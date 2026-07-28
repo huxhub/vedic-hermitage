@@ -2,7 +2,9 @@ import express from 'express';
 import {
   loginAdmin,
   getPackages,
+  addPackage,
   updatePackages,
+  deletePackage,
   getFeedbacks,
   addFeedback,
   deleteFeedback,
@@ -23,7 +25,9 @@ router.post('/admin/login', loginAdmin);
 
 // Packages API
 router.get('/packages', getPackages);
+router.post('/packages', addPackage);
 router.put('/packages', updatePackages);
+router.delete('/packages/:id', deletePackage);
 
 // Feedbacks / Testimonials API
 router.get('/feedbacks', getFeedbacks);
