@@ -573,37 +573,37 @@ export default function AdminDashboardPage() {
                     {feedbacks.map((fb) => (
                       <div
                         key={fb.id}
-                        className="bg-white p-6 rounded-2xl border border-[#e2ded8] shadow-sm flex flex-col justify-between gap-5 hover:shadow-md transition-all duration-200"
+                        className="bg-white p-6 rounded-2xl border border-[#e2ded8] shadow-sm flex flex-col justify-between gap-5 hover:shadow-md transition-all duration-200 overflow-hidden min-w-0 max-w-full"
                       >
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
+                        <div className="flex flex-col gap-3 min-w-0">
+                          <div className="flex items-center justify-between gap-2 min-w-0">
+                            <div className="flex items-center gap-3 min-w-0">
                               {fb.avatar ? (
-                                <img src={fb.avatar} alt={fb.name} className="w-10 h-10 rounded-full object-cover shadow-xs" />
+                                <img src={fb.avatar} alt={fb.name} className="w-10 h-10 rounded-full object-cover shadow-xs shrink-0" />
                               ) : (
-                                <div className="w-10 h-10 rounded-full bg-[#faf0ea] text-[#c4622d] font-bold flex items-center justify-center text-sm shadow-xs">
+                                <div className="w-10 h-10 rounded-full bg-[#faf0ea] text-[#c4622d] font-bold flex items-center justify-center text-sm shadow-xs shrink-0">
                                   {fb.name.charAt(0)}
                                 </div>
                               )}
-                              <div>
-                                <span className="font-semibold text-[#2d241e] text-[15px] block" style={{ fontFamily: dmSans }}>
+                              <div className="min-w-0 flex-1">
+                                <span className="font-semibold text-[#2d241e] text-[15px] block truncate" style={{ fontFamily: dmSans }}>
                                   {fb.name}
                                 </span>
                                 {fb.location && (
-                                  <span className="text-[#87786c] text-[12px]" style={{ fontFamily: dmSans }}>
+                                  <span className="text-[#87786c] text-[12px] block truncate" style={{ fontFamily: dmSans }}>
                                     {fb.location}
                                   </span>
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-1 text-[#d4a843]">
+                            <div className="flex items-center gap-1 text-[#d4a843] shrink-0">
                               {Array.from({ length: fb.rating || 5 }).map((_, i) => (
                                 <Star key={i} className="w-3.5 h-3.5 fill-current" />
                               ))}
                             </div>
                           </div>
 
-                          <p className="text-[#6b5e54] text-[14px] italic leading-relaxed" style={{ fontFamily: dmSans }}>
+                          <p className="text-[#6b5e54] text-[14px] italic leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere] min-w-0 max-w-full" style={{ fontFamily: dmSans }}>
                             "{fb.quote}"
                           </p>
                         </div>
