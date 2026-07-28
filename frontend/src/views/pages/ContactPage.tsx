@@ -8,6 +8,12 @@ import mapSvg from "@/imports/contact/map.svg";
 
 const GOOGLE_MAPS_URL = "https://www.google.com/maps/place/Vedic+Hermitage+-+Ayur+Mana/@10.7938681,76.3028862,17z/data=!3m1!4b1!4m6!3m5!1s0x3ba7dbaf65d2dbd1:0x474377487349aa9a!8m2!3d10.7938681!4d76.3028862";
 
+const navLinks = [
+  { label: "How to reach us", href: GOOGLE_MAPS_URL },
+  { label: "Language spoken", href: "#" },
+  { label: "Nearest airport", href: "#" },
+];
+
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
   const [loading, setLoading] = useState(false);
