@@ -196,7 +196,7 @@ function PackageCard({ pkg, index }: { pkg: (typeof packages)[0]; index: number 
             </span>
           </div>
           <Link
-            to="/contact"
+            to="/book-a-retreat"
             className="bg-[#c4622d] text-white px-8 py-3.5 rounded-md text-[14px] font-semibold uppercase hover:bg-[#b5562a] transition-colors w-full sm:w-auto"
             style={{ fontFamily: dmSans }}
           >
