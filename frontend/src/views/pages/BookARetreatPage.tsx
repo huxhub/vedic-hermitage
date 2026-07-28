@@ -105,16 +105,16 @@ function SelectionSummary({
     <div className="flex flex-col gap-6 sm:gap-8 w-full lg:w-[400px] shrink-0">
       {/* Summary card */}
       <div
-        className="bg-[#faf6f0] rounded-[12px] p-6 sm:p-8 flex flex-col gap-6"
+        className="bg-[#faf6f0] rounded-[12px] p-6 sm:p-8 flex flex-col gap-6 overflow-hidden min-w-0 max-w-full"
         style={{ border: "1px solid #d4a843" }}
       >
         <h3 className="text-[22px] sm:text-[24px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
           Selection Summary
         </h3>
-        <div className="flex flex-col gap-3">
-          <div className="flex items-start justify-between text-[12px]">
-            <span className="text-[#6b5e54]" style={{ fontFamily: dmSans }}>Package</span>
-            <span className="font-semibold text-[#2d241e] text-right max-w-[180px]" style={{ fontFamily: dmSans }}>
+        <div className="flex flex-col gap-3 min-w-0">
+          <div className="flex items-start justify-between gap-3 text-[12px] min-w-0">
+            <span className="text-[#6b5e54] shrink-0" style={{ fontFamily: dmSans }}>Package</span>
+            <span className="font-semibold text-[#2d241e] text-right break-words min-w-0 max-w-[200px]" style={{ fontFamily: dmSans }}>
               {selectedPkg ? selectedPkg.name : "—"}
             </span>
           </div>
@@ -125,7 +125,7 @@ function SelectionSummary({
           {selectedPkg && (
             <div className="flex items-start justify-between text-[12px]">
               <span className="text-[#6b5e54]" style={{ fontFamily: dmSans }}>Price</span>
-              <span className="font-semibold text-[#c4622d]" style={{ fontFamily: dmSans }}>{selectedPkg.price}</span>
+              <span className="font-semibold text-[#c4622d] text-right break-words min-w-0" style={{ fontFamily: dmSans }}>{selectedPkg.price}</span>
             </div>
           )}
           <div className="h-px bg-[#d9d1c7] mt-1" />
@@ -388,11 +388,11 @@ function Step3({
         Review Your Booking
       </h2>
 
-      <div className="bg-[#faf6f0] rounded-[12px] divide-y divide-[#e6e2dc]" style={{ border: "1px solid #d9d1c7" }}>
+      <div className="bg-[#faf6f0] rounded-[12px] divide-y divide-[#e6e2dc] overflow-hidden min-w-0 max-w-full" style={{ border: "1px solid #d9d1c7" }}>
         {rows.map(({ label, value }) => (
-          <div key={label} className="flex items-start justify-between px-6 py-4">
-            <span className="text-[13px] text-[#6b5e54]" style={{ fontFamily: dmSans }}>{label}</span>
-            <span className="text-[14px] font-semibold text-[#2d241e] text-right max-w-xs" style={{ fontFamily: dmSans }}>{value}</span>
+          <div key={label} className="flex items-start justify-between gap-4 px-6 py-4 min-w-0">
+            <span className="text-[13px] text-[#6b5e54] shrink-0" style={{ fontFamily: dmSans }}>{label}</span>
+            <span className="text-[14px] font-semibold text-[#2d241e] text-right break-words min-w-0 flex-1" style={{ fontFamily: dmSans }}>{value}</span>
           </div>
         ))}
       </div>
