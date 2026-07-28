@@ -185,30 +185,30 @@ function Step1({
             <div
               key={pkg.id}
               onClick={() => onSelect(pkg.id)}
-              className="rounded-[10px] p-5 sm:p-6 cursor-pointer transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              className="rounded-[10px] p-5 sm:p-6 cursor-pointer transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 overflow-hidden min-w-0 max-w-full"
               style={{
                 border: active ? "1.5px solid #c4622d" : "1.5px solid #d9d1c7",
                 background: active ? "#fdf8f5" : "white",
               }}
             >
-              <div className="flex items-start sm:items-center gap-4">
+              <div className="flex items-start sm:items-center gap-4 min-w-0 flex-1">
                 <div
                   className="w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center transition-colors shrink-0 mt-1 sm:mt-0"
                   style={{ borderColor: active ? "#c4622d" : "#d9d1c7" }}
                 >
                   {active && <div className="w-2.5 h-2.5 rounded-full bg-[#c4622d]" />}
                 </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[11px] font-semibold uppercase text-[#d4a843]" style={{ fontFamily: dmSans }}>
+                <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                  <span className="text-[11px] font-semibold uppercase text-[#d4a843] break-words min-w-0 max-w-full" style={{ fontFamily: dmSans }}>
                     {pkg.subtitle}
                   </span>
-                  <span className="text-[18px] sm:text-[20px] font-medium text-[#2d241e]" style={{ fontFamily: playfair }}>
+                  <span className="text-[18px] sm:text-[20px] font-medium text-[#2d241e] break-words min-w-0 max-w-full" style={{ fontFamily: playfair }}>
                     {pkg.name}
                   </span>
                 </div>
               </div>
-              <div className="text-left sm:text-right pl-9 sm:pl-0">
-                <div className="text-[15px] sm:text-[16px] font-semibold text-[#2d241e]" style={{ fontFamily: playfair }}>
+              <div className="text-left sm:text-right pl-9 sm:pl-0 shrink-0">
+                <div className="text-[15px] sm:text-[16px] font-semibold text-[#2d241e] break-words" style={{ fontFamily: playfair }}>
                   {pkg.price}
                 </div>
                 <div className="text-[12px] text-[#6b5e54]" style={{ fontFamily: dmSans }}>{pkg.duration}</div>
