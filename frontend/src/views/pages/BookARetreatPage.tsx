@@ -94,12 +94,10 @@ function Field({
 
 // ── Selection summary sidebar ──────────────────────────────────────────────────
 function SelectionSummary({
-  selectedPkg, guests, onConfirm, step,
+  selectedPkg, guests,
 }: {
   selectedPkg: (typeof packages)[0] | undefined;
   guests: string;
-  onConfirm: () => void;
-  step: number;
 }) {
   return (
     <div className="flex flex-col gap-6 sm:gap-8 w-full lg:w-[400px] shrink-0">
@@ -128,16 +126,7 @@ function SelectionSummary({
               <span className="font-semibold text-[#c4622d] text-right break-words min-w-0" style={{ fontFamily: dmSans }}>{selectedPkg.price}</span>
             </div>
           )}
-          <div className="h-px bg-[#d9d1c7] mt-1" />
         </div>
-        <button
-          onClick={onConfirm}
-          disabled={!selectedPkg || step === 3}
-          className="w-full bg-[#c4622d] text-white py-3 rounded-md text-[14px] font-semibold uppercase hover:bg-[#b5562a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ fontFamily: dmSans }}
-        >
-          {step === 3 ? "Booking Submitted" : "Confirm Booking"}
-        </button>
       </div>
 
       {/* Need Help */}
@@ -531,8 +520,6 @@ export default function BookARetreatPage() {
               <SelectionSummary
                 selectedPkg={selectedPkg}
                 guests={guests}
-                onConfirm={() => step === 3 ? setConfirmed(true) : setStep(step < 3 ? step + 1 : step)}
-                step={step}
               />
             )}
           </div>
