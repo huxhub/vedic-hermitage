@@ -99,8 +99,14 @@ export async function addNewPackage(pkgData: {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(pkgData),
     });
-    const data = await res.json();
-    if (res.ok && data.package) {
+    const text = await res.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.warn("Server responded with non-JSON response:", text);
+    }
+    if (res.ok && data?.package) {
       return { success: true, package: data.package };
     }
   } catch (err) {

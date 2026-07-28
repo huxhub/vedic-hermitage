@@ -77,10 +77,15 @@ async function initSchema(dbPool) {
       location VARCHAR(255),
       quote TEXT NOT NULL,
       rating INT DEFAULT 5,
-      avatar VARCHAR(255),
+      avatar LONGTEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
+  try {
+    await dbPool.query('ALTER TABLE feedbacks MODIFY COLUMN avatar LONGTEXT');
+  } catch (e) {
+    // Column already LONGTEXT or ignore if fails
+  }
 
   // Enquiries / Messages table
   await dbPool.query(`
