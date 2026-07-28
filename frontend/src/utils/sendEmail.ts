@@ -11,7 +11,7 @@ export interface SendEmailResult {
 }
 
 export async function sendContactEmail(data: ContactFormData): Promise<SendEmailResult> {
-  const recipientEmail = import.meta.env.VITE_CONTACT_RECIPIENT_EMAIL || "mridul1422@gmail.com";
+  const recipientEmail = import.meta.env.VITE_CONTACT_RECIPIENT_EMAIL || "";
   const emailJsServiceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
   const emailJsTemplateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
   const emailJsPublicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;

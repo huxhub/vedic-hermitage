@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 
 export default function WhatsAppWidget() {
   const [visible, setVisible] = useState(false);
-  const rawNumber = import.meta.env.VITE_WHATSAPP_NUMBER || "919061313555";
+  const rawNumber = import.meta.env.VITE_WHATSAPP_NUMBER || "";
   const whatsappNumber = rawNumber.replace(/[^\d]/g, "");
   const defaultMessage = encodeURIComponent("Hello! I would like to inquire about Vedic Hermitage.");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${defaultMessage}`;

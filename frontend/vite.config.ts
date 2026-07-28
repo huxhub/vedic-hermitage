@@ -45,9 +45,9 @@ function emailApiPlugin(env) {
             }
 
             const nodemailer = await import('nodemailer');
-            const emailUser = env.EMAIL_USER || process.env.EMAIL_USER || 'mridul1422@gmail.com';
+            const emailUser = env.EMAIL_USER || process.env.EMAIL_USER || '';
             const emailPass = env.EMAIL_PASS || process.env.EMAIL_PASS || '';
-            const recipientEmail = env.VITE_CONTACT_RECIPIENT_EMAIL || process.env.VITE_CONTACT_RECIPIENT_EMAIL || 'mridul1422@gmail.com';
+            const recipientEmail = env.VITE_CONTACT_RECIPIENT_EMAIL || process.env.VITE_CONTACT_RECIPIENT_EMAIL || '';
 
             const transporter = nodemailer.createTransport({
               service: 'gmail',
