@@ -84,7 +84,7 @@ export const addPackage = async (req, res) => {
   }
 };
 
-// Update Package Prices
+// Update Package Prices Array
 export const updatePackages = async (req, res) => {
   const { packages } = req.body;
   if (!Array.isArray(packages)) {
@@ -104,6 +104,41 @@ export const updatePackages = async (req, res) => {
   } catch (err) {
     console.error('[Update Packages Error]:', err);
     return res.status(500).json({ success: false, message: 'Failed to update package prices in database.' });
+  }
+};
+
+// Update Single Package
+export const updateSinglePackage = async (req, res) => {
+  const { id } = req.params;
+  const { title, price, subtitle, duration, items } = req.body;
+
+  try {
+    const pool = await getDbPool();
+    const numericPrice = parseInt(String(price).replace(/[^\d]/g, ''), 10) || 0;
+    const itemsArray = Array.isArray(items) ? items : (typeof items === 'string' ? items.split(',').map((s) => s.trim()) : []);
+    const itemsJson = JSON.stringify(itemsArray);
+
+    await pool.query(
+      'UPDATE packages SET title = ?, price = ?, price_numeric = ?, subtitle = ?, label = ?, duration = ?, items = ? WHERE id = ?',
+      [title, price, numericPrice, subtitle || '', subtitle || '', duration || '7 Days', itemsJson, id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      package: {
+        id,
+        title,
+        price,
+        price_numeric: numericPrice,
+        subtitle: subtitle || '',
+        label: subtitle || '',
+        duration: duration || '7 Days',
+        items: itemsArray,
+      },
+    });
+  } catch (err) {
+    console.error('[Update Single Package Error]:', err);
+    return res.status(500).json({ success: false, message: 'Failed to update package in database.' });
   }
 };
 
@@ -160,6 +195,35 @@ export const addFeedback = async (req, res) => {
   } catch (err) {
     console.error('[Add Feedback Error]:', err);
     return res.status(500).json({ success: false, message: 'Failed to add feedback.' });
+  }
+};
+
+// Update Customer Feedback
+export const updateFeedback = async (req, res) => {
+  const { id } = req.params;
+  const { name, location, quote, rating, avatar } = req.body;
+
+  try {
+    const pool = await getDbPool();
+    await pool.query(
+      'UPDATE feedbacks SET name = ?, location = ?, quote = ?, rating = ?, avatar = ? WHERE id = ?',
+      [name, location || '', quote, rating || 5, avatar || '', id]
+    );
+
+    return res.status(200).json({
+      success: true,
+      feedback: {
+        id: Number(id),
+        name,
+        location: location || '',
+        quote,
+        rating: rating || 5,
+        avatar: avatar || '',
+      },
+    });
+  } catch (err) {
+    console.error('[Update Feedback Error]:', err);
+    return res.status(500).json({ success: false, message: 'Failed to update feedback in database.' });
   }
 };
 

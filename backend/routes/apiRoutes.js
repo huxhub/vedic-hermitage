@@ -4,9 +4,11 @@ import {
   getPackages,
   addPackage,
   updatePackages,
+  updateSinglePackage,
   deletePackage,
   getFeedbacks,
   addFeedback,
+  updateFeedback,
   deleteFeedback,
 } from '../controllers/adminController.js';
 import { handleContactEnquiry } from '../controllers/contactController.js';
@@ -27,11 +29,13 @@ router.post('/admin/login', loginAdmin);
 router.get('/packages', getPackages);
 router.post('/packages', addPackage);
 router.put('/packages', updatePackages);
+router.put('/packages/:id', updateSinglePackage);
 router.delete('/packages/:id', deletePackage);
 
 // Feedbacks / Testimonials API
 router.get('/feedbacks', getFeedbacks);
 router.post('/feedbacks', addFeedback);
+router.put('/feedbacks/:id', updateFeedback);
 router.delete('/feedbacks/:id', deleteFeedback);
 
 // Contact Enquiry API

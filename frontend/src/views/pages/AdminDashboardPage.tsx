@@ -10,22 +10,22 @@ import {
   Trash2,
   Star,
   CheckCircle2,
-  Sparkles,
   User,
   MapPin,
   X,
   Upload,
-  Image as ImageIcon,
   Layers,
-  Clock,
+  Pencil,
 } from "lucide-react";
 import {
   fetchPackages,
   updatePackages,
   addNewPackage,
+  updateSinglePackage,
   deletePackage,
   fetchFeedbacks,
   addFeedback,
+  updateSingleFeedback,
   deleteFeedback,
   adminAuth,
   PackageItem,
@@ -41,6 +41,7 @@ export default function AdminDashboardPage() {
   const [pkgs, setPkgs] = useState<PackageItem[]>([]);
   const [savingPkgs, setSavingPkgs] = useState(false);
   const [isAddPkgOpen, setIsAddPkgOpen] = useState(false);
+  const [editingPkgId, setEditingPkgId] = useState<string | null>(null);
   const [newPkg, setNewPkg] = useState({
     title: "",
     subtitle: "",
@@ -52,6 +53,7 @@ export default function AdminDashboardPage() {
 
   // Feedback Management State
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
+  const [editingFbId, setEditingFbId] = useState<number | null>(null);
   const [newFb, setNewFb] = useState({ name: "", location: "", quote: "", rating: 5, avatar: "" });
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [savingFb, setSavingFb] = useState(false);
@@ -90,7 +92,25 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleCreatePackage = async (e: React.FormEvent) => {
+  const handleOpenAddPkg = () => {
+    setEditingPkgId(null);
+    setNewPkg({ title: "", subtitle: "", price: "", duration: "7 Days", itemsStr: "" });
+    setIsAddPkgOpen(true);
+  };
+
+  const handleOpenEditPkg = (pkg: PackageItem) => {
+    setEditingPkgId(pkg.id);
+    setNewPkg({
+      title: pkg.title,
+      subtitle: pkg.subtitle || pkg.label || "",
+      price: pkg.price.replace("₹", ""),
+      duration: pkg.duration || "7 Days",
+      itemsStr: Array.isArray(pkg.items) ? pkg.items.join("\n") : "",
+    });
+    setIsAddPkgOpen(true);
+  };
+
+  const handleSavePackageForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPkg.title || !newPkg.price) return;
 
@@ -101,19 +121,37 @@ export default function AdminDashboardPage() {
         .map((s) => s.trim())
         .filter(Boolean);
 
-      const res = await addNewPackage({
-        title: newPkg.title,
-        price: newPkg.price,
-        subtitle: newPkg.subtitle || "Custom Program",
-        duration: newPkg.duration,
-        items: itemsList.length > 0 ? itemsList : ["Full Panchakarma Protocol", "Physician Consultation", "Sattvic Meals"],
-      });
+      if (editingPkgId) {
+        // Edit Mode
+        const res = await updateSinglePackage(editingPkgId, {
+          title: newPkg.title,
+          price: newPkg.price,
+          subtitle: newPkg.subtitle || "Custom Program",
+          duration: newPkg.duration,
+          items: itemsList.length > 0 ? itemsList : ["Full Panchakarma Protocol", "Physician Consultation", "Sattvic Meals"],
+        });
 
-      if (res.success && res.package) {
-        setPkgs((prev) => [...prev, res.package!]);
-        setNewPkg({ title: "", subtitle: "", price: "", duration: "7 Days", itemsStr: "" });
-        setIsAddPkgOpen(false);
+        if (res.success && res.package) {
+          setPkgs((prev) => prev.map((p) => (p.id === editingPkgId ? res.package! : p)));
+          setIsAddPkgOpen(false);
+        }
+      } else {
+        // Create Mode
+        const res = await addNewPackage({
+          title: newPkg.title,
+          price: newPkg.price,
+          subtitle: newPkg.subtitle || "Custom Program",
+          duration: newPkg.duration,
+          items: itemsList.length > 0 ? itemsList : ["Full Panchakarma Protocol", "Physician Consultation", "Sattvic Meals"],
+        });
+
+        if (res.success && res.package) {
+          setPkgs((prev) => [...prev, res.package!]);
+          setIsAddPkgOpen(false);
+        }
       }
+      setNewPkg({ title: "", subtitle: "", price: "", duration: "7 Days", itemsStr: "" });
+      setEditingPkgId(null);
     } catch (err) {
       console.error(err);
     } finally {
@@ -129,7 +167,22 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Image File Picker Handler for Testimonials
+  // Testimonial Edit & Add Handlers
+  const handleOpenEditFeedback = (fb: FeedbackItem) => {
+    setEditingFbId(fb.id);
+    setNewFb({
+      name: fb.name,
+      location: fb.location || "",
+      quote: fb.quote,
+      rating: fb.rating || 5,
+      avatar: fb.avatar || "",
+    });
+    setAvatarPreview(fb.avatar || "");
+
+    // Smooth scroll to form
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -143,18 +196,28 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleAddFeedback = async (e: React.FormEvent) => {
+  const handleSaveFeedbackForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFb.name || !newFb.quote) return;
 
     setSavingFb(true);
     try {
-      const res = await addFeedback(newFb);
-      if (res.success && res.feedback) {
-        setFeedbacks((prev) => [res.feedback!, ...prev]);
-        setNewFb({ name: "", location: "", quote: "", rating: 5, avatar: "" });
-        setAvatarPreview("");
+      if (editingFbId) {
+        // Edit Mode
+        const res = await updateSingleFeedback(editingFbId, newFb);
+        if (res.success && res.feedback) {
+          setFeedbacks((prev) => prev.map((f) => (f.id === editingFbId ? res.feedback! : f)));
+          setEditingFbId(null);
+        }
+      } else {
+        // Create Mode
+        const res = await addFeedback(newFb);
+        if (res.success && res.feedback) {
+          setFeedbacks((prev) => [res.feedback!, ...prev]);
+        }
       }
+      setNewFb({ name: "", location: "", quote: "", rating: 5, avatar: "" });
+      setAvatarPreview("");
     } catch (err) {
       console.error(err);
     } finally {
@@ -167,6 +230,11 @@ export default function AdminDashboardPage() {
     const ok = await deleteFeedback(id);
     if (ok) {
       setFeedbacks((prev) => prev.filter((f) => f.id !== id));
+      if (editingFbId === id) {
+        setEditingFbId(null);
+        setNewFb({ name: "", location: "", quote: "", rating: 5, avatar: "" });
+        setAvatarPreview("");
+      }
     }
   };
 
@@ -281,8 +349,8 @@ export default function AdminDashboardPage() {
             </h1>
             <p className="text-[13px] text-[#786c62]" style={{ fontFamily: dmSans }}>
               {activeTab === "packages"
-                ? "Configure pricing and add new retreat packages."
-                : "Manage customer reviews and custom testimonial photos."}
+                ? "Configure pricing, edit, and create new retreat packages."
+                : "Manage and edit customer reviews displayed on the website testimonials marquee."}
             </p>
           </div>
 
@@ -291,7 +359,7 @@ export default function AdminDashboardPage() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setIsAddPkgOpen(true)}
+                onClick={handleOpenAddPkg}
                 className="flex items-center gap-2 bg-[#2c4a2e] hover:bg-[#203722] text-white px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md cursor-pointer"
                 style={{ fontFamily: dmSans }}
               >
@@ -369,16 +437,27 @@ export default function AdminDashboardPage() {
                     >
                       <div className="flex flex-col gap-4 min-w-0">
                         <div className="flex items-center justify-between gap-2 min-w-0">
-                          <span className="text-[11px] font-bold text-[#c4622d] uppercase tracking-wider bg-[#faf0ea] border border-[#f5dfd5] px-3 py-1 rounded-full truncate max-w-[200px]" title={pkg.subtitle || pkg.label}>
+                          <span className="text-[11px] font-bold text-[#c4622d] uppercase tracking-wider bg-[#faf0ea] border border-[#f5dfd5] px-3 py-1 rounded-full truncate max-w-[160px]" title={pkg.subtitle || pkg.label}>
                             {pkg.subtitle || pkg.label}
                           </span>
-                          <button
-                            onClick={() => handleDeletePkg(pkg.id)}
-                            className="text-[#998b7e] hover:text-red-600 transition-colors p-1 cursor-pointer shrink-0"
-                            title="Delete Package"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+
+                          {/* Action Buttons: Edit & Delete */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() => handleOpenEditPkg(pkg)}
+                              className="text-[#786c62] hover:text-[#c4622d] bg-[#faf8f5] hover:bg-[#faf0ea] p-1.5 rounded-lg transition-colors cursor-pointer"
+                              title="Edit Package"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeletePkg(pkg.id)}
+                              className="text-[#786c62] hover:text-red-600 bg-[#faf8f5] hover:bg-red-50 p-1.5 rounded-lg transition-colors cursor-pointer"
+                              title="Delete Package"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
 
                         <h3 className="text-[20px] font-medium text-[#2d241e] break-words max-w-full" style={{ fontFamily: playfair }}>
@@ -433,23 +512,33 @@ export default function AdminDashboardPage() {
                 transition={{ duration: 0.2 }}
                 className="flex flex-col gap-8"
               >
-                {/* Add Feedback Form Card */}
+                {/* Add / Edit Feedback Form Card */}
                 <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#e2ded8] shadow-sm flex flex-col gap-6">
                   <div className="flex items-center justify-between border-b border-[#f0eae1] pb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-[#2c4a2e]/10 flex items-center justify-center text-[#2c4a2e]">
-                        <Plus className="w-5 h-5" />
+                        {editingFbId ? <Pencil className="w-5 h-5 text-[#c4622d]" /> : <Plus className="w-5 h-5" />}
                       </div>
                       <h3 className="text-[20px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
-                        Add New Customer Review
+                        {editingFbId ? "Edit Customer Review" : "Add New Customer Review"}
                       </h3>
                     </div>
-                    <span className="text-[12px] text-[#786c62]" style={{ fontFamily: dmSans }}>
-                      Renders live on home page marquee
-                    </span>
+                    {editingFbId && (
+                      <button
+                        onClick={() => {
+                          setEditingFbId(null);
+                          setNewFb({ name: "", location: "", quote: "", rating: 5, avatar: "" });
+                          setAvatarPreview("");
+                        }}
+                        className="text-[12px] font-semibold text-[#c4622d] hover:underline cursor-pointer"
+                        style={{ fontFamily: dmSans }}
+                      >
+                        Cancel Editing
+                      </button>
+                    )}
                   </div>
 
-                  <form onSubmit={handleAddFeedback} className="flex flex-col gap-5">
+                  <form onSubmit={handleSaveFeedbackForm} className="flex flex-col gap-5">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
@@ -518,14 +607,14 @@ export default function AdminDashboardPage() {
                         {avatarPreview && (
                           <div className="flex items-center gap-3 bg-[#faf0ea] p-1.5 pr-4 rounded-full border border-[#f5dfd5]">
                             <img src={avatarPreview} alt="Preview" className="w-8 h-8 rounded-full object-cover" />
-                            <span className="text-[12px] font-semibold text-[#c4622d]">Photo Uploaded</span>
+                            <span className="text-[12px] font-semibold text-[#c4622d]">Photo Ready</span>
                             <button
                               type="button"
                               onClick={() => {
                                 setAvatarPreview("");
                                 setNewFb((prev) => ({ ...prev, avatar: "" }));
                               }}
-                              className="text-[#998b7e] hover:text-red-600"
+                              className="text-[#998b7e] hover:text-red-600 cursor-pointer"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -549,17 +638,34 @@ export default function AdminDashboardPage() {
                       />
                     </div>
 
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      type="submit"
-                      disabled={savingFb}
-                      className="self-start flex items-center gap-2 bg-[#2c4a2e] hover:bg-[#203722] text-white px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
-                      style={{ fontFamily: dmSans }}
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>{savingFb ? "Adding..." : "Add Review"}</span>
-                    </motion.button>
+                    <div className="flex items-center gap-3 self-start">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        type="submit"
+                        disabled={savingFb}
+                        className="flex items-center gap-2 bg-[#2c4a2e] hover:bg-[#203722] text-white px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                        style={{ fontFamily: dmSans }}
+                      >
+                        {editingFbId ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                        <span>{savingFb ? "Saving..." : editingFbId ? "Update Review" : "Add Review"}</span>
+                      </motion.button>
+
+                      {editingFbId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingFbId(null);
+                            setNewFb({ name: "", location: "", quote: "", rating: 5, avatar: "" });
+                            setAvatarPreview("");
+                          }}
+                          className="px-4 py-2.5 rounded-xl text-[13px] font-semibold text-[#786c62] hover:bg-[#e2ded8] transition-colors cursor-pointer"
+                          style={{ fontFamily: dmSans }}
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
                   </form>
                 </div>
 
@@ -608,7 +714,16 @@ export default function AdminDashboardPage() {
                           </p>
                         </div>
 
-                        <div className="pt-3 border-t border-[#f2ede6] flex justify-end">
+                        {/* Action Buttons: Edit & Delete Review */}
+                        <div className="pt-3 border-t border-[#f2ede6] flex items-center justify-end gap-3">
+                          <button
+                            onClick={() => handleOpenEditFeedback(fb)}
+                            className="flex items-center gap-1.5 text-[#786c62] hover:text-[#c4622d] text-[12px] font-semibold transition-colors cursor-pointer"
+                            style={{ fontFamily: dmSans }}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                            <span>Edit Review</span>
+                          </button>
                           <button
                             onClick={() => handleDeleteFeedback(fb.id)}
                             className="flex items-center gap-1.5 text-red-600 hover:text-red-800 text-[12px] font-semibold transition-colors cursor-pointer"
@@ -628,7 +743,7 @@ export default function AdminDashboardPage() {
         </main>
       </div>
 
-      {/* ── Right-Side Drawer Form for Adding New Package ── */}
+      {/* ── Right-Side Drawer Form for Adding / Editing Package ── */}
       <AnimatePresence>
         {isAddPkgOpen && (
           <>
@@ -654,10 +769,10 @@ export default function AdminDashboardPage() {
                 <div className="flex items-center justify-between border-b border-[#f0eae1] pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-[#c4622d]/10 text-[#c4622d] flex items-center justify-center">
-                      <Package className="w-5 h-5" />
+                      {editingPkgId ? <Pencil className="w-5 h-5" /> : <Package className="w-5 h-5" />}
                     </div>
                     <h3 className="text-[20px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
-                      Add New Package
+                      {editingPkgId ? "Edit Package Details" : "Add New Package"}
                     </h3>
                   </div>
                   <button
@@ -669,7 +784,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Form Fields */}
-                <form id="add-pkg-form" onSubmit={handleCreatePackage} className="flex flex-col gap-5">
+                <form id="add-pkg-form" onSubmit={handleSavePackageForm} className="flex flex-col gap-5">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
                       Package Title *
@@ -766,8 +881,8 @@ export default function AdminDashboardPage() {
                   className="flex items-center gap-2 bg-[#c4622d] hover:bg-[#b5562a] text-white px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md disabled:opacity-50 cursor-pointer"
                   style={{ fontFamily: dmSans }}
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>{addingPkg ? "Adding..." : "Add Package"}</span>
+                  {editingPkgId ? <Pencil className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  <span>{addingPkg ? "Saving..." : editingPkgId ? "Update Package" : "Add Package"}</span>
                 </button>
               </div>
             </motion.div>

@@ -85,7 +85,6 @@ export async function addNewPackage(pkgData: {
     items: pkgData.items || [],
   };
 
-  // Instantly update local cache
   const cached = localStorage.getItem(PKGS_KEY);
   let localPkgs: PackageItem[] = cached ? JSON.parse(cached) : [];
   localPkgs = [...localPkgs, newPkg];
@@ -113,6 +112,53 @@ export async function addNewPackage(pkgData: {
     console.error("Error creating package on server:", err);
   }
   return { success: true, package: newPkg };
+}
+
+export async function updateSinglePackage(
+  id: string,
+  pkgData: {
+    title: string;
+    price: string;
+    subtitle?: string;
+    duration?: string;
+    items?: string[];
+  }
+): Promise<{ success: boolean; package?: PackageItem }> {
+  const formattedPrice = pkgData.price.startsWith("₹") ? pkgData.price : `₹${pkgData.price}`;
+
+  const cached = localStorage.getItem(PKGS_KEY);
+  let localPkgs: PackageItem[] = cached ? JSON.parse(cached) : [];
+  localPkgs = localPkgs.map((p) =>
+    p.id === id
+      ? {
+          ...p,
+          title: pkgData.title,
+          price: formattedPrice,
+          subtitle: pkgData.subtitle || p.subtitle,
+          label: pkgData.subtitle || p.label,
+          duration: pkgData.duration || p.duration,
+          items: pkgData.items || p.items,
+        }
+      : p
+  );
+  localStorage.setItem(PKGS_KEY, JSON.stringify(localPkgs));
+
+  window.dispatchEvent(new CustomEvent("vedic-packages-updated", { detail: localPkgs }));
+
+  try {
+    const res = await fetch(`/api/packages/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(pkgData),
+    });
+    const data = await res.json();
+    if (res.ok && data.package) {
+      return { success: true, package: data.package };
+    }
+  } catch (err) {
+    console.error("Error updating single package on server:", err);
+  }
+  return { success: true };
 }
 
 export async function updatePackages(packages: Partial<PackageItem>[]): Promise<{ success: boolean; message: string }> {
@@ -215,6 +261,39 @@ export async function addFeedback(feedback: {
     console.error("Error adding feedback to server:", err);
   }
   return { success: true, feedback: newFb };
+}
+
+export async function updateSingleFeedback(
+  id: number,
+  feedback: {
+    name: string;
+    location?: string;
+    quote: string;
+    rating?: number;
+    avatar?: string;
+  }
+): Promise<{ success: boolean; feedback?: FeedbackItem }> {
+  const cached = localStorage.getItem(FBS_KEY);
+  let localFbs: FeedbackItem[] = cached ? JSON.parse(cached) : [];
+  localFbs = localFbs.map((f) => (f.id === id ? { ...f, ...feedback } : f));
+  localStorage.setItem(FBS_KEY, JSON.stringify(localFbs));
+
+  window.dispatchEvent(new CustomEvent("vedic-feedbacks-updated", { detail: localFbs }));
+
+  try {
+    const res = await fetch(`/api/feedbacks/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(feedback),
+    });
+    const data = await res.json();
+    if (res.ok && data.feedback) {
+      return { success: true, feedback: data.feedback };
+    }
+  } catch (err) {
+    console.error("Error updating feedback on server:", err);
+  }
+  return { success: true };
 }
 
 export async function deleteFeedback(id: number): Promise<boolean> {
