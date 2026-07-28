@@ -20,13 +20,10 @@ import {
   Phone,
   Mail,
   FileText,
-  Clock,
-  CheckCircle,
   AlertCircle,
 } from "lucide-react";
 import {
   fetchPackages,
-  updatePackages,
   addNewPackage,
   updateSinglePackage,
   deletePackage,
@@ -35,7 +32,6 @@ import {
   updateSingleFeedback,
   deleteFeedback,
   fetchBookings,
-  updateBookingStatus,
   deleteBookingRecord,
   adminAuth,
   PackageItem,
@@ -71,7 +67,6 @@ export default function AdminDashboardPage() {
 
   // Bookings Management State
   const [bookings, setBookings] = useState<BookingItem[]>([]);
-  const [bookingFilter, setBookingFilter] = useState<"All" | "Pending" | "Confirmed" | "Completed">("All");
 
   useEffect(() => {
     loadData();
@@ -243,11 +238,6 @@ export default function AdminDashboardPage() {
   };
 
   // Booking Handlers
-  const handleStatusChange = async (id: number, newStatus: "Pending" | "Confirmed" | "Completed" | "Cancelled") => {
-    setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b)));
-    await updateBookingStatus(id, newStatus);
-  };
-
   const handleDeleteBooking = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this booking record?")) return;
     const ok = await deleteBookingRecord(id);
@@ -255,11 +245,6 @@ export default function AdminDashboardPage() {
       setBookings((prev) => prev.filter((b) => b.id !== id));
     }
   };
-
-  const filteredBookings = bookings.filter((b) => {
-    if (bookingFilter === "All") return true;
-    return b.status === bookingFilter;
-  });
 
   return (
     <div className="min-h-screen bg-[#f4f1ea] flex flex-col lg:flex-row relative">
@@ -289,7 +274,7 @@ export default function AdminDashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* ── Sidebar (Responsive Mobile Drawer / Desktop Fixed) ── */}
+      {/* ── Sidebar ── */}
       <aside
         className={`w-64 lg:w-72 bg-[#1b331c] text-white flex flex-col justify-between shrink-0 shadow-2xl border-r border-[#264528] fixed lg:sticky top-0 h-screen z-50 transition-transform duration-300 ${
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
@@ -444,14 +429,14 @@ export default function AdminDashboardPage() {
               )}
               {activeTab === "bookings" && (
                 <>
-                  Retreat Bookings <span className="italic font-serif opacity-80">&amp;</span> Enquiries
+                  Retreat Bookings <span className="italic font-serif opacity-80">&amp;</span> Reservations
                 </>
               )}
             </h1>
             <p className="text-[12px] sm:text-[13px] text-[#786c62]" style={{ fontFamily: dmSans }}>
               {activeTab === "packages" && "Configure pricing, edit, and create new retreat packages."}
               {activeTab === "feedbacks" && "Manage and edit customer reviews displayed on the website testimonials marquee."}
-              {activeTab === "bookings" && "View and manage guest retreat bookings created on the website."}
+              {activeTab === "bookings" && "View guest retreat reservations submitted on the website."}
             </p>
           </div>
 
@@ -506,47 +491,17 @@ export default function AdminDashboardPage() {
             )}
 
             {activeTab === "bookings" && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
-                      Total Bookings
-                    </span>
-                    <span className="text-[22px] font-bold text-[#2d241e]" style={{ fontFamily: dmSans }}>
-                      {bookings.length} Reservations
-                    </span>
-                  </div>
-                  <div className="w-11 h-11 rounded-xl bg-[#faf0ea] text-[#c4622d] flex items-center justify-center">
-                    <Calendar className="w-5 h-5" />
-                  </div>
+              <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between max-w-sm">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
+                    Total Bookings
+                  </span>
+                  <span className="text-[22px] font-bold text-[#2d241e]" style={{ fontFamily: dmSans }}>
+                    {bookings.length} Guest Reservations
+                  </span>
                 </div>
-
-                <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
-                      Pending Review
-                    </span>
-                    <span className="text-[22px] font-bold text-[#d4a843]" style={{ fontFamily: dmSans }}>
-                      {bookings.filter((b) => b.status === "Pending").length} Guests
-                    </span>
-                  </div>
-                  <div className="w-11 h-11 rounded-xl bg-[#fefce8] text-[#d4a843] flex items-center justify-center">
-                    <Clock className="w-5 h-5" />
-                  </div>
-                </div>
-
-                <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
-                      Confirmed Retreats
-                    </span>
-                    <span className="text-[22px] font-bold text-[#2c4a2e]" style={{ fontFamily: dmSans }}>
-                      {bookings.filter((b) => b.status === "Confirmed").length} Confirmed
-                    </span>
-                  </div>
-                  <div className="w-11 h-11 rounded-xl bg-[#f0f5f1] text-[#2c4a2e] flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5" />
-                  </div>
+                <div className="w-11 h-11 rounded-xl bg-[#faf0ea] text-[#c4622d] flex items-center justify-center">
+                  <Calendar className="w-5 h-5" />
                 </div>
               </div>
             )}
@@ -876,76 +831,33 @@ export default function AdminDashboardPage() {
                 transition={{ duration: 0.2 }}
                 className="flex flex-col gap-6"
               >
-                {/* Filter bar */}
-                <div className="flex items-center justify-between flex-wrap gap-4 bg-white p-4 rounded-2xl border border-[#e2ded8] shadow-xs">
-                  <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
-                    {(["All", "Pending", "Confirmed", "Completed"] as const).map((filter) => (
-                      <button
-                        key={filter}
-                        onClick={() => setBookingFilter(filter)}
-                        className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
-                          bookingFilter === filter
-                            ? "bg-[#2c4a2e] text-white shadow-xs"
-                            : "bg-[#faf8f5] text-[#786c62] hover:bg-[#e8e2d8]"
-                        }`}
-                        style={{ fontFamily: dmSans }}
-                      >
-                        {filter} ({filter === "All" ? bookings.length : bookings.filter((b) => b.status === filter).length})
-                      </button>
-                    ))}
-                  </div>
-
-                  <span className="text-[12px] text-[#786c62] font-semibold" style={{ fontFamily: dmSans }}>
-                    Showing {filteredBookings.length} of {bookings.length} reservations
-                  </span>
-                </div>
-
                 {/* Bookings Grid */}
-                {filteredBookings.length === 0 ? (
+                {bookings.length === 0 ? (
                   <div className="bg-white rounded-2xl p-12 text-center border border-[#e2ded8] flex flex-col items-center gap-3">
                     <AlertCircle className="w-10 h-10 text-[#d4a843] opacity-60" />
                     <h3 className="text-[18px] font-medium text-[#2d241e]" style={{ fontFamily: playfair }}>
                       No Bookings Found
                     </h3>
                     <p className="text-[13px] text-[#786c62]" style={{ fontFamily: dmSans }}>
-                      {bookingFilter === "All"
-                        ? "No retreat bookings have been submitted yet."
-                        : `No bookings match the "${bookingFilter}" filter criteria.`}
+                      No guest retreat reservations have been submitted yet.
                     </p>
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {filteredBookings.map((b) => (
+                    {bookings.map((b) => (
                       <div
                         key={b.id}
                         className="bg-white p-6 rounded-2xl border border-[#e2ded8] shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-5 min-w-0 overflow-hidden"
                       >
                         <div className="flex flex-col gap-4 min-w-0">
-                          {/* Header: Status Dropdown & Date */}
-                          <div className="flex items-center justify-between gap-3 flex-wrap min-w-0">
+                          {/* Header: Date Badge */}
+                          <div className="flex items-center justify-between gap-3 flex-wrap min-w-0 pb-2 border-b border-[#f2ede6]">
                             <span className="text-[11px] font-semibold text-[#87786c]" style={{ fontFamily: dmSans }}>
-                              Booked on: {new Date(b.created_at || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              Booked on: {new Date(b.created_at || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                             </span>
-
-                            <select
-                              value={b.status}
-                              onChange={(e) => handleStatusChange(b.id, e.target.value as any)}
-                              className={`text-[12px] font-bold px-3 py-1 rounded-full outline-none cursor-pointer border transition-colors ${
-                                b.status === "Confirmed"
-                                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                                  : b.status === "Completed"
-                                  ? "bg-blue-50 text-blue-800 border-blue-200"
-                                  : b.status === "Cancelled"
-                                  ? "bg-red-50 text-red-800 border-red-200"
-                                  : "bg-amber-50 text-amber-800 border-amber-200"
-                              }`}
-                              style={{ fontFamily: dmSans }}
-                            >
-                              <option value="Pending">🟡 Pending</option>
-                              <option value="Confirmed">🟢 Confirmed</option>
-                              <option value="Completed">🔵 Completed</option>
-                              <option value="Cancelled">🔴 Cancelled</option>
-                            </select>
+                            <span className="text-[11px] font-bold text-[#2c4a2e] bg-[#f0f5f1] px-3 py-1 rounded-full border border-[#d8e5d9]" style={{ fontFamily: dmSans }}>
+                              New Reservation
+                            </span>
                           </div>
 
                           {/* Customer Info */}
