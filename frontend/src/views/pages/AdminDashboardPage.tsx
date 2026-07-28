@@ -573,7 +573,7 @@ export default function AdminDashboardPage() {
                     {feedbacks.map((fb) => (
                       <div
                         key={fb.id}
-                        className="bg-white p-6 rounded-2xl border border-[#e2ded8] shadow-sm flex flex-col justify-between gap-5 hover:shadow-md transition-all duration-200 overflow-hidden min-w-0 max-w-full"
+                        className="bg-white p-6 rounded-2xl border border-[#e2ded8] shadow-sm flex flex-col justify-between gap-5 hover:shadow-md transition-all duration-200 h-[220px] overflow-hidden min-w-0 max-w-full"
                       >
                         <div className="flex flex-col gap-3 min-w-0">
                           <div className="flex items-center justify-between gap-2 min-w-0">
@@ -603,7 +603,7 @@ export default function AdminDashboardPage() {
                             </div>
                           </div>
 
-                          <p className="text-[#6b5e54] text-[14px] italic leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere] min-w-0 max-w-full" style={{ fontFamily: dmSans }}>
+                          <p className="text-[#6b5e54] text-[14px] italic leading-relaxed line-clamp-3 overflow-hidden break-words [word-break:break-word] [overflow-wrap:anywhere] min-w-0 max-w-full" style={{ fontFamily: dmSans }}>
                             "{fb.quote}"
                           </p>
                         </div>

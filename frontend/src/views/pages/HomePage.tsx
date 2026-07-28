@@ -586,13 +586,15 @@ export default function HomePage() {
               {/* Set A */}
               {[...fbList, ...fbList].map((t, i) => (
                 <div key={`set-a-${i}`} className="pr-8 shrink-0">
-                  <div className="bg-white rounded-[12px] p-6 sm:p-10 flex flex-col gap-6 shadow-[0px_4px_12px_rgba(0,0,0,0.03)] w-[290px] sm:w-[420px] h-full overflow-hidden min-w-0 max-w-full">
-                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="opacity-30">
-                      <path d={svgPaths.p1817a900} stroke="#C4622D" strokeLinecap="round" strokeWidth="2" />
-                    </svg>
-                    <p className="text-[14px] sm:text-[16px] leading-[1.6] text-[#2d241e] italic flex-1 break-all [word-break:break-word] [overflow-wrap:anywhere] min-w-0 max-w-full" style={{ fontFamily: dmSans }}>
-                      "{t.quote}"
-                    </p>
+                  <div className="bg-white rounded-[12px] p-6 sm:p-10 flex flex-col justify-between gap-6 shadow-[0px_4px_12px_rgba(0,0,0,0.03)] w-[290px] sm:w-[420px] h-[320px] sm:h-[340px] overflow-hidden min-w-0 max-w-full">
+                    <div className="flex flex-col gap-4 min-w-0">
+                      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="opacity-30 shrink-0">
+                        <path d={svgPaths.p1817a900} stroke="#C4622D" strokeLinecap="round" strokeWidth="2" />
+                      </svg>
+                      <p className="text-[14px] sm:text-[16px] leading-[1.6] text-[#2d241e] italic line-clamp-4 overflow-hidden break-words [word-break:break-word] [overflow-wrap:anywhere] min-w-0 max-w-full" style={{ fontFamily: dmSans }}>
+                        "{t.quote}"
+                      </p>
+                    </div>
                     <div className="flex items-center gap-4 min-w-0">
                       <img src={t.avatar} alt={t.name} className="w-12 h-12 rounded-full object-cover shrink-0" />
                       <div className="min-w-0 flex-1">
@@ -607,13 +609,15 @@ export default function HomePage() {
               {/* Set B */}
               {[...fbList, ...fbList].map((t, i) => (
                 <div key={`set-b-${i}`} className="pr-8 shrink-0">
-                  <div className="bg-white rounded-[12px] p-6 sm:p-10 flex flex-col gap-6 shadow-[0px_4px_12px_rgba(0,0,0,0.03)] w-[290px] sm:w-[420px] h-full overflow-hidden min-w-0 max-w-full">
-                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="opacity-30">
-                      <path d={svgPaths.p1817a900} stroke="#C4622D" strokeLinecap="round" strokeWidth="2" />
-                    </svg>
-                    <p className="text-[14px] sm:text-[16px] leading-[1.6] text-[#2d241e] italic flex-1 break-all [word-break:break-word] [overflow-wrap:anywhere] min-w-0 max-w-full" style={{ fontFamily: dmSans }}>
-                      "{t.quote}"
-                    </p>
+                  <div className="bg-white rounded-[12px] p-6 sm:p-10 flex flex-col justify-between gap-6 shadow-[0px_4px_12px_rgba(0,0,0,0.03)] w-[290px] sm:w-[420px] h-[320px] sm:h-[340px] overflow-hidden min-w-0 max-w-full">
+                    <div className="flex flex-col gap-4 min-w-0">
+                      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="opacity-30 shrink-0">
+                        <path d={svgPaths.p1817a900} stroke="#C4622D" strokeLinecap="round" strokeWidth="2" />
+                      </svg>
+                      <p className="text-[14px] sm:text-[16px] leading-[1.6] text-[#2d241e] italic line-clamp-4 overflow-hidden break-words [word-break:break-word] [overflow-wrap:anywhere] min-w-0 max-w-full" style={{ fontFamily: dmSans }}>
+                        "{t.quote}"
+                      </p>
+                    </div>
                     <div className="flex items-center gap-4 min-w-0">
                       <img src={t.avatar} alt={t.name} className="w-12 h-12 rounded-full object-cover shrink-0" />
                       <div className="min-w-0 flex-1">
