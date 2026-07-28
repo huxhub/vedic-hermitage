@@ -437,7 +437,7 @@ export const deleteBooking = async (req, res) => {
   }
 };
 
-// Get Site Settings (WhatsApp Number & Contact Number)
+// Get Site Settings (WhatsApp Number, Contact Number, Contact Email)
 export const getSettings = async (req, res) => {
   try {
     const pool = await getDbPool();
@@ -448,6 +448,7 @@ export const getSettings = async (req, res) => {
         settings: {
           whatsapp_number: rows[0].whatsapp_number || '+91 90613 13555',
           contact_number: rows[0].contact_number || '+91 90613 13555',
+          contact_email: rows[0].contact_email || 'info@vedichermitage.com',
         },
       });
     }
@@ -459,18 +460,19 @@ export const getSettings = async (req, res) => {
     settings: {
       whatsapp_number: process.env.WHATSAPP_NUMBER || '+91 90613 13555',
       contact_number: process.env.CONTACT_NUMBER || '+91 90613 13555',
+      contact_email: process.env.CONTACT_EMAIL || 'info@vedichermitage.com',
     },
   });
 };
 
 // Update Site Settings
 export const updateSettings = async (req, res) => {
-  const { whatsapp_number, contact_number } = req.body;
+  const { whatsapp_number, contact_number, contact_email } = req.body;
   try {
     const pool = await getDbPool();
     await pool.query(
-      'INSERT INTO settings (id, whatsapp_number, contact_number) VALUES (1, ?, ?) ON DUPLICATE KEY UPDATE whatsapp_number = VALUES(whatsapp_number), contact_number = VALUES(contact_number)',
-      [whatsapp_number || '+91 90613 13555', contact_number || '+91 90613 13555']
+      'INSERT INTO settings (id, whatsapp_number, contact_number, contact_email) VALUES (1, ?, ?, ?) ON DUPLICATE KEY UPDATE whatsapp_number = VALUES(whatsapp_number), contact_number = VALUES(contact_number), contact_email = VALUES(contact_email)',
+      [whatsapp_number || '+91 90613 13555', contact_number || '+91 90613 13555', contact_email || 'info@vedichermitage.com']
     );
     return res.status(200).json({
       success: true,
@@ -478,6 +480,7 @@ export const updateSettings = async (req, res) => {
       settings: {
         whatsapp_number: whatsapp_number || '+91 90613 13555',
         contact_number: contact_number || '+91 90613 13555',
+        contact_email: contact_email || 'info@vedichermitage.com',
       },
     });
   } catch (err) {

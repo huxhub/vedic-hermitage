@@ -123,23 +123,29 @@ async function initSchema(dbPool) {
     );
   `);
 
-  // Site Settings table (WhatsApp number, Contact number)
+  // Site Settings table (WhatsApp number, Contact number, Contact Email)
   await dbPool.query(`
     CREATE TABLE IF NOT EXISTS settings (
       id INT PRIMARY KEY DEFAULT 1,
       whatsapp_number VARCHAR(100) DEFAULT '+91 90613 13555',
       contact_number VARCHAR(100) DEFAULT '+91 90613 13555',
+      contact_email VARCHAR(255) DEFAULT 'info@vedichermitage.com',
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     );
   `);
+  try {
+    await dbPool.query("ALTER TABLE settings ADD COLUMN contact_email VARCHAR(255) DEFAULT 'info@vedichermitage.com'");
+  } catch (e) {
+    // Ignore if column already exists
+  }
 
   // Insert default settings row if table is empty
   try {
     const [settingRows] = await dbPool.query('SELECT * FROM settings WHERE id = 1');
     if (settingRows.length === 0) {
       await dbPool.query(
-        'INSERT INTO settings (id, whatsapp_number, contact_number) VALUES (1, ?, ?)',
-        ['+91 90613 13555', '+91 90613 13555']
+        'INSERT INTO settings (id, whatsapp_number, contact_number, contact_email) VALUES (1, ?, ?, ?)',
+        ['+91 90613 13555', '+91 90613 13555', 'info@vedichermitage.com']
       );
     }
   } catch (e) {

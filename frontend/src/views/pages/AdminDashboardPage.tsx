@@ -83,6 +83,7 @@ export default function AdminDashboardPage() {
   const [siteSettings, setSiteSettings] = useState<SiteSettings>({
     whatsapp_number: "+91 90613 13555",
     contact_number: "+91 90613 13555",
+    contact_email: "info@vedichermitage.com",
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsAlert, setSettingsAlert] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -1149,6 +1150,25 @@ export default function AdminDashboardPage() {
                         />
                         <span className="text-[11px] text-[#87786c]" style={{ fontFamily: dmSans }}>
                           Displayed in the Contact Us page, header, and website footer.
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[12px] font-semibold text-[#6b5e54] flex items-center gap-1.5" style={{ fontFamily: dmSans }}>
+                          <Mail className="w-3.5 h-3.5 text-[#c4622d]" />
+                          Website Contact Email *
+                        </label>
+                        <input
+                          type="email"
+                          placeholder="e.g. info@vedichermitage.com"
+                          value={siteSettings.contact_email}
+                          onChange={(e) => setSiteSettings({ ...siteSettings, contact_email: e.target.value })}
+                          required
+                          className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl p-3.5 text-[14px] text-[#2d241e] font-semibold outline-none focus:border-[#c4622d] focus:bg-white transition-all"
+                          style={{ fontFamily: dmSans }}
+                        />
+                        <span className="text-[11px] text-[#87786c]" style={{ fontFamily: dmSans }}>
+                          Displayed in the Contact Us page email address field.
                         </span>
                       </div>
                     </form>

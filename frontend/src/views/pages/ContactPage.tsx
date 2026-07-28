@@ -20,14 +20,16 @@ export default function ContactPage() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
   const [contactNumber, setContactNumber] = useState("+91 9061313555 / +91 9207313555");
+  const [contactEmail, setContactEmail] = useState("info@vedichermitage.com");
 
   useEffect(() => {
     const loadSettings = () => {
       fetch("/api/settings")
         .then((res) => res.json())
         .then((data) => {
-          if (data && data.settings && data.settings.contact_number) {
-            setContactNumber(data.settings.contact_number);
+          if (data && data.settings) {
+            if (data.settings.contact_number) setContactNumber(data.settings.contact_number);
+            if (data.settings.contact_email) setContactEmail(data.settings.contact_email);
           }
         })
         .catch((err) => console.warn("Could not load settings:", err));
@@ -40,7 +42,7 @@ export default function ContactPage() {
   const contactInfo = [
     { label: "Address", value: "Swastika Ayurveda Foundation , Vedic Hermitage , Edakode Vaniyamkulam , Ottapalam, Palakkad" },
     { label: "Phone", value: contactNumber },
-    { label: "Email", value: "info@vedichermitage.com" },
+    { label: "Email", value: contactEmail },
     { label: "Working Hours", value: "Mon–Sun: 8 AM – 8 PM " },
   ];
 

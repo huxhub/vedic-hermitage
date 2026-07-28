@@ -435,6 +435,7 @@ export async function deleteBookingRecord(id: number): Promise<boolean> {
 export interface SiteSettings {
   whatsapp_number: string;
   contact_number: string;
+  contact_email: string;
 }
 
 const SETTINGS_KEY = "vedic_site_settings";
@@ -443,6 +444,7 @@ export async function fetchSiteSettings(): Promise<SiteSettings> {
   const defaultSettings: SiteSettings = {
     whatsapp_number: "+91 90613 13555",
     contact_number: "+91 90613 13555",
+    contact_email: "info@vedichermitage.com",
   };
   try {
     const res = await fetch("/api/settings");
