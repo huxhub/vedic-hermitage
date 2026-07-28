@@ -355,30 +355,16 @@ export default function AdminDashboardPage() {
           </div>
 
           {activeTab === "packages" && (
-            <div className="flex items-center gap-3">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleOpenAddPkg}
-                className="flex items-center gap-2 bg-[#2c4a2e] hover:bg-[#203722] text-white px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md cursor-pointer"
-                style={{ fontFamily: dmSans }}
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add New Package</span>
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSavePrices}
-                disabled={savingPkgs}
-                className="flex items-center gap-2 bg-[#c4622d] hover:bg-[#b5562a] text-white px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md disabled:opacity-50 cursor-pointer"
-                style={{ fontFamily: dmSans }}
-              >
-                <Save className="w-4 h-4" />
-                <span>{savingPkgs ? "Saving..." : "Save Package Prices"}</span>
-              </motion.button>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleOpenAddPkg}
+              className="flex items-center gap-2 bg-[#2c4a2e] hover:bg-[#203722] text-white px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md cursor-pointer"
+              style={{ fontFamily: dmSans }}
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Package</span>
+            </motion.button>
           )}
         </header>
 
@@ -464,21 +450,17 @@ export default function AdminDashboardPage() {
                           {pkg.title}
                         </h3>
 
-                        <div className="flex flex-col gap-1.5 mt-1">
-                          <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
-                            Package Price (Amount)
-                          </label>
-                          <div className="relative flex items-center">
-                            <span className="absolute left-3.5 text-[#87786c] font-bold text-sm select-none">
-                              ₹
+                        <div className="flex flex-col gap-1 mt-1">
+                          <span className="text-[11px] font-semibold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
+                            Package Price
+                          </span>
+                          <div className="bg-[#faf8f5] border border-[#e8e2d8] rounded-xl px-4 py-2.5 flex items-center justify-between">
+                            <span className="text-[18px] font-bold text-[#2d241e]" style={{ fontFamily: dmSans }}>
+                              {pkg.price.startsWith("₹") ? pkg.price : `₹ ${pkg.price}`}
                             </span>
-                            <input
-                              type="text"
-                              value={pkg.price.replace("₹", "")}
-                              onChange={(e) => handlePriceChange(pkg.id, `₹${e.target.value}`)}
-                              className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl py-3 pl-8 pr-3 text-[16px] font-bold text-[#2d241e] outline-none focus:border-[#c4622d] focus:bg-white focus:ring-2 focus:ring-[#c4622d]/10 transition-all w-full"
-                              style={{ fontFamily: dmSans }}
-                            />
+                            <span className="text-[11px] text-[#786c62] font-medium" style={{ fontFamily: dmSans }}>
+                              {pkg.duration || "7 Days"}
+                            </span>
                           </div>
                         </div>
                       </div>
