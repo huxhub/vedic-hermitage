@@ -12,8 +12,23 @@ import BookARetreatPage from "@/pages/BookARetreatPage";
 import ContactPage from "@/pages/ContactPage";
 import YogaPage from "@/pages/YogaPage";
 import TreatmentDetailPage from "@/pages/TreatmentDetailPage";
+import AdminLoginPage from "@/pages/AdminLoginPage";
+import AdminDashboardPage from "@/pages/AdminDashboardPage";
+import ProtectedRoute from "./ProtectedRoute";
 
 export const router = createBrowserRouter([
+  {
+    path: "/admin/login",
+    Component: AdminLoginPage,
+  },
+  {
+    path: "/admin/dashboard",
+    element: (
+      <ProtectedRoute>
+        <AdminDashboardPage />
+      </ProtectedRoute>
+    ),
+  },
   {
     path: "/",
     Component: Root,

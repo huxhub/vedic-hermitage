@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { ParallaxHero, Label, playfair, dmSans, fadeUp, dur } from "./shared";
+import { fetchPackages } from "@/data/adminApi";
 import svgPaths from "@/imports/HealingPackages-1/svg-pfxndf5swk";
 
 import imgHero from "@/imports/HealingPackages/e9a5aece1af89b301b17ee5574b151327380d284.png";
@@ -209,6 +210,21 @@ function PackageCard({ pkg, index }: { pkg: (typeof packages)[0]; index: number 
 
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function PackagesPage() {
+  const [pkgData, setPkgData] = useState(packages);
+
+  useEffect(() => {
+    fetchPackages().then((data) => {
+      if (data && data.length > 0) {
+        setPkgData((prev) =>
+          prev.map((p) => {
+            const updated = data.find((d) => d.id === p.id);
+            return updated ? { ...p, price: updated.price } : p;
+          })
+        );
+      }
+    });
+  }, []);
+
   return (
     <div>
       {/* ── Hero ── */}
@@ -228,21 +244,10 @@ export default function PackagesPage() {
         </motion.div>
       </ParallaxHero>
 
-      {/* ── Intro ── */}
-      <div className="bg-white flex justify-center py-12 sm:py-16 px-6 sm:px-8">
-        <motion.p
-          className="text-[16px] sm:text-[20px] leading-[1.6] text-[#6b5e54] text-center max-w-[900px]"
-          style={{ fontFamily: dmSans }}
-          variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} transition={dur}
-        >
-          Our carefully curated retreat packages combine authentic Panchakarma therapies, personalized physician consultations, Sattvic meals, and immersive nature experiences.
-        </motion.p>
-      </div>
-
       {/* ── Package cards ── */}
-      <section className="bg-white px-6 md:px-20 pb-12 md:pb-16">
+      <section className="bg-white px-6 md:px-20 py-12 md:py-16">
         <div className="max-w-[1280px] mx-auto flex flex-col gap-8">
-          {packages.map((pkg, i) => (
+          {pkgData.map((pkg, i) => (
             <PackageCard key={pkg.id} pkg={pkg} index={i} />
           ))}
         </div>
