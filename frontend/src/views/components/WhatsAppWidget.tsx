@@ -6,15 +6,20 @@ export default function WhatsAppWidget() {
   const [whatsappNumber, setWhatsappNumber] = useState("");
 
   useEffect(() => {
-    // Fetch runtime server configuration
-    fetch("/api/config")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.whatsappNumber) {
-          setWhatsappNumber(data.whatsappNumber.replace(/[^\d]/g, ""));
-        }
-      })
-      .catch((err) => console.warn("Could not load runtime config:", err));
+    const loadSettings = () => {
+      fetch("/api/settings")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.settings && data.settings.whatsapp_number) {
+            setWhatsappNumber(data.settings.whatsapp_number.replace(/[^\d]/g, ""));
+          }
+        })
+        .catch((err) => console.warn("Could not load runtime settings:", err));
+    };
+
+    loadSettings();
+    window.addEventListener("vedic-settings-updated", loadSettings);
+    return () => window.removeEventListener("vedic-settings-updated", loadSettings);
   }, []);
 
   useEffect(() => {

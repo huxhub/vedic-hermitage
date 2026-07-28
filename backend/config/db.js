@@ -123,6 +123,29 @@ async function initSchema(dbPool) {
     );
   `);
 
+  // Site Settings table (WhatsApp number, Contact number)
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS settings (
+      id INT PRIMARY KEY DEFAULT 1,
+      whatsapp_number VARCHAR(100) DEFAULT '+91 90613 13555',
+      contact_number VARCHAR(100) DEFAULT '+91 90613 13555',
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    );
+  `);
+
+  // Insert default settings row if table is empty
+  try {
+    const [settingRows] = await dbPool.query('SELECT * FROM settings WHERE id = 1');
+    if (settingRows.length === 0) {
+      await dbPool.query(
+        'INSERT INTO settings (id, whatsapp_number, contact_number) VALUES (1, ?, ?)',
+        ['+91 90613 13555', '+91 90613 13555']
+      );
+    }
+  } catch (e) {
+    console.warn('[DB Settings Seed Warning]:', e.message);
+  }
+
   // Seed default admin user if empty
   const [adminRows] = await dbPool.query('SELECT COUNT(*) as count FROM admin_users');
   if (adminRows[0].count === 0) {

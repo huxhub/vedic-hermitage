@@ -21,6 +21,13 @@ import {
   Mail,
   FileText,
   AlertCircle,
+  Settings,
+  Key,
+  Smartphone,
+  PhoneCall,
+  ShieldCheck,
+  Save,
+  Lock,
 } from "lucide-react";
 import {
   fetchPackages,
@@ -33,16 +40,20 @@ import {
   deleteFeedback,
   fetchBookings,
   deleteBookingRecord,
+  fetchSiteSettings,
+  updateSiteSettings,
+  updateAdminCredentials,
   adminAuth,
   PackageItem,
   FeedbackItem,
   BookingItem,
+  SiteSettings,
 } from "@/data/adminApi";
 import { playfair, dmSans } from "./shared";
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"packages" | "feedbacks" | "bookings">("packages");
+  const [activeTab, setActiveTab] = useState<"packages" | "feedbacks" | "bookings" | "settings">("packages");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Package Management State
@@ -68,15 +79,35 @@ export default function AdminDashboardPage() {
   // Bookings Management State
   const [bookings, setBookings] = useState<BookingItem[]>([]);
 
+  // Site Settings State
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>({
+    whatsapp_number: "+91 90613 13555",
+    contact_number: "+91 90613 13555",
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsAlert, setSettingsAlert] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Admin Account Credentials Form State
+  const [credForm, setCredForm] = useState({
+    current_password: "",
+    new_username: "admin",
+    new_password: "",
+    confirm_password: "",
+  });
+  const [savingCreds, setSavingCreds] = useState(false);
+  const [credAlert, setCredAlert] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   useEffect(() => {
     loadData();
     window.addEventListener("vedic-packages-updated", loadData);
     window.addEventListener("vedic-feedbacks-updated", loadData);
     window.addEventListener("vedic-bookings-updated", loadData);
+    window.addEventListener("vedic-settings-updated", loadData);
     return () => {
       window.removeEventListener("vedic-packages-updated", loadData);
       window.removeEventListener("vedic-feedbacks-updated", loadData);
       window.removeEventListener("vedic-bookings-updated", loadData);
+      window.removeEventListener("vedic-settings-updated", loadData);
     };
   }, []);
 
@@ -89,6 +120,9 @@ export default function AdminDashboardPage() {
 
     const bData = await fetchBookings();
     setBookings(bData);
+
+    const settingsData = await fetchSiteSettings();
+    setSiteSettings(settingsData);
   };
 
   const handleLogout = () => {
@@ -246,6 +280,47 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Site Settings Handlers
+  const handleSaveSiteSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    setSettingsAlert(null);
+    const res = await updateSiteSettings(siteSettings);
+    setSavingSettings(false);
+    if (res.success) {
+      setSettingsAlert({ type: "success", text: res.message || "Site settings updated successfully!" });
+    } else {
+      setSettingsAlert({ type: "error", text: res.message || "Failed to update site settings." });
+    }
+  };
+
+  // Admin Credentials Handlers
+  const handleSaveCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCredAlert(null);
+    if (credForm.new_password !== credForm.confirm_password) {
+      setCredAlert({ type: "error", text: "New password and Confirm password do not match!" });
+      return;
+    }
+    if (!credForm.current_password || !credForm.new_username || !credForm.new_password) {
+      setCredAlert({ type: "error", text: "All credential fields are required." });
+      return;
+    }
+    setSavingCreds(true);
+    const res = await updateAdminCredentials({
+      current_password: credForm.current_password,
+      new_username: credForm.new_username,
+      new_password: credForm.new_password,
+    });
+    setSavingCreds(false);
+    if (res.success) {
+      setCredAlert({ type: "success", text: res.message || "Admin username and password updated successfully!" });
+      setCredForm((prev) => ({ ...prev, current_password: "", new_password: "", confirm_password: "" }));
+    } else {
+      setCredAlert({ type: "error", text: res.message || "Current password is incorrect." });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f4f1ea] flex flex-col lg:flex-row relative">
       {/* ── Mobile Top Header ── */}
@@ -381,6 +456,29 @@ export default function AdminDashboardPage() {
                 )}
               </div>
             </button>
+
+            {/* Nav Item: Settings */}
+            <button
+              onClick={() => {
+                setActiveTab("settings");
+                setMobileMenuOpen(false);
+              }}
+              className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[14px] font-medium transition-all duration-200 cursor-pointer w-full text-left relative ${
+                activeTab === "settings"
+                  ? "bg-[#254527] text-white font-semibold shadow-inner border border-[#3b633e]"
+                  : "text-[#c2d4c4] hover:bg-white/5 hover:text-white"
+              }`}
+              style={{ fontFamily: dmSans }}
+            >
+              {activeTab === "settings" && (
+                <motion.div
+                  layoutId="activeTabIndicator"
+                  className="absolute left-0 top-2 bottom-2 w-1.5 bg-[#c4622d] rounded-r-full"
+                />
+              )}
+              <Settings className={`w-4 h-4 shrink-0 ${activeTab === "settings" ? "text-[#c4622d]" : ""}`} />
+              <span>System Settings</span>
+            </button>
           </nav>
         </div>
 
@@ -432,11 +530,17 @@ export default function AdminDashboardPage() {
                   Retreat Bookings <span className="italic font-serif opacity-80">&amp;</span> Reservations
                 </>
               )}
+              {activeTab === "settings" && (
+                <>
+                  System <span className="italic font-serif opacity-80">&amp;</span> Contact Settings
+                </>
+              )}
             </h1>
             <p className="text-[12px] sm:text-[13px] text-[#786c62]" style={{ fontFamily: dmSans }}>
               {activeTab === "packages" && "Configure pricing, edit, and create new retreat packages."}
               {activeTab === "feedbacks" && "Manage and edit customer reviews displayed on the website testimonials marquee."}
               {activeTab === "bookings" && "View guest retreat reservations submitted on the website."}
+              {activeTab === "settings" && "Update website WhatsApp number, contact numbers, and change admin login credentials."}
             </p>
           </div>
 
@@ -502,6 +606,22 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="w-11 h-11 rounded-xl bg-[#faf0ea] text-[#c4622d] flex items-center justify-center">
                   <Calendar className="w-5 h-5" />
+                </div>
+              </div>
+            )}
+
+            {activeTab === "settings" && (
+              <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between max-w-sm">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
+                    System Status
+                  </span>
+                  <span className="text-[22px] font-bold text-[#2d241e]" style={{ fontFamily: dmSans }}>
+                    System Active &amp; Live
+                  </span>
+                </div>
+                <div className="w-11 h-11 rounded-xl bg-[#f0f5f1] text-[#2c4a2e] flex items-center justify-center">
+                  <ShieldCheck className="w-5 h-5" />
                 </div>
               </div>
             )}
@@ -951,6 +1071,230 @@ export default function AdminDashboardPage() {
                     ))}
                   </div>
                 )}
+              </motion.div>
+            )}
+
+            {/* Tab 4: System Settings Section */}
+            {activeTab === "settings" && (
+              <motion.div
+                key="settings-tab"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+                className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+              >
+                {/* ── Settings Card 1: Website Phone & WhatsApp Numbers ── */}
+                <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#e2ded8] shadow-sm flex flex-col justify-between gap-6">
+                  <div className="flex flex-col gap-6">
+                    <div className="flex items-center gap-3 border-b border-[#f0eae1] pb-4">
+                      <div className="w-10 h-10 rounded-xl bg-[#25D366]/10 text-[#25D366] flex items-center justify-center">
+                        <Smartphone className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-[18px] sm:text-[20px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
+                          Website Contact &amp; WhatsApp
+                        </h3>
+                        <p className="text-[12px] text-[#786c62]" style={{ fontFamily: dmSans }}>
+                          Configure contact numbers displayed across the website &amp; WhatsApp chat widget.
+                        </p>
+                      </div>
+                    </div>
+
+                    {settingsAlert && (
+                      <div
+                        className={`p-4 rounded-xl text-[13px] font-semibold flex items-center gap-2 ${
+                          settingsAlert.type === "success"
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                            : "bg-red-50 text-red-800 border border-red-200"
+                        }`}
+                        style={{ fontFamily: dmSans }}
+                      >
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
+                        <span>{settingsAlert.text}</span>
+                      </div>
+                    )}
+
+                    <form id="site-settings-form" onSubmit={handleSaveSiteSettings} className="flex flex-col gap-5">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[12px] font-semibold text-[#6b5e54] flex items-center gap-1.5" style={{ fontFamily: dmSans }}>
+                          <Smartphone className="w-3.5 h-3.5 text-[#25D366]" />
+                          WhatsApp Widget Number *
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. +91 90613 13555"
+                          value={siteSettings.whatsapp_number}
+                          onChange={(e) => setSiteSettings({ ...siteSettings, whatsapp_number: e.target.value })}
+                          required
+                          className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl p-3.5 text-[14px] text-[#2d241e] font-semibold outline-none focus:border-[#25D366] focus:bg-white transition-all"
+                          style={{ fontFamily: dmSans }}
+                        />
+                        <span className="text-[11px] text-[#87786c]" style={{ fontFamily: dmSans }}>
+                          This number is used by the floating green WhatsApp chat widget.
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[12px] font-semibold text-[#6b5e54] flex items-center gap-1.5" style={{ fontFamily: dmSans }}>
+                          <PhoneCall className="w-3.5 h-3.5 text-[#c4622d]" />
+                          Website Contact Number *
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. +91 90613 13555 / +91 92073 13555"
+                          value={siteSettings.contact_number}
+                          onChange={(e) => setSiteSettings({ ...siteSettings, contact_number: e.target.value })}
+                          required
+                          className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl p-3.5 text-[14px] text-[#2d241e] font-semibold outline-none focus:border-[#c4622d] focus:bg-white transition-all"
+                          style={{ fontFamily: dmSans }}
+                        />
+                        <span className="text-[11px] text-[#87786c]" style={{ fontFamily: dmSans }}>
+                          Displayed in the Contact Us page, header, and website footer.
+                        </span>
+                      </div>
+                    </form>
+                  </div>
+
+                  <div className="pt-4 border-t border-[#f0eae1] flex justify-end">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      form="site-settings-form"
+                      disabled={savingSettings}
+                      className="flex items-center gap-2 bg-[#2c4a2e] hover:bg-[#203722] text-white px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md disabled:opacity-50 cursor-pointer"
+                      style={{ fontFamily: dmSans }}
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{savingSettings ? "Saving Settings..." : "Save Contact Settings"}</span>
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* ── Settings Card 2: Admin Login ID & Password Change ── */}
+                <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#e2ded8] shadow-sm flex flex-col justify-between gap-6">
+                  <div className="flex flex-col gap-6">
+                    <div className="flex items-center gap-3 border-b border-[#f0eae1] pb-4">
+                      <div className="w-10 h-10 rounded-xl bg-[#c4622d]/10 text-[#c4622d] flex items-center justify-center">
+                        <Key className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-[18px] sm:text-[20px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
+                          Admin Login Credentials
+                        </h3>
+                        <p className="text-[12px] text-[#786c62]" style={{ fontFamily: dmSans }}>
+                          Change your administrator login username ID and password securely.
+                        </p>
+                      </div>
+                    </div>
+
+                    {credAlert && (
+                      <div
+                        className={`p-4 rounded-xl text-[13px] font-semibold flex items-center gap-2 ${
+                          credAlert.type === "success"
+                            ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                            : "bg-red-50 text-red-800 border border-red-200"
+                        }`}
+                        style={{ fontFamily: dmSans }}
+                      >
+                        <CheckCircle2 className="w-4 h-4 shrink-0" />
+                        <span>{credAlert.text}</span>
+                      </div>
+                    )}
+
+                    <form id="admin-cred-form" onSubmit={handleSaveCredentials} className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
+                          New Admin Login Username / ID *
+                        </label>
+                        <div className="relative">
+                          <User className="w-4 h-4 text-[#998b7e] absolute left-3.5 top-3.5" />
+                          <input
+                            type="text"
+                            placeholder="admin"
+                            value={credForm.new_username}
+                            onChange={(e) => setCredForm({ ...credForm, new_username: e.target.value })}
+                            required
+                            className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl py-3 pl-10 pr-3.5 text-[14px] text-[#2d241e] font-semibold outline-none focus:border-[#c4622d] focus:bg-white transition-all w-full"
+                            style={{ fontFamily: dmSans }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
+                          Current Password (for verification) *
+                        </label>
+                        <div className="relative">
+                          <Lock className="w-4 h-4 text-[#998b7e] absolute left-3.5 top-3.5" />
+                          <input
+                            type="password"
+                            placeholder="Enter current password"
+                            value={credForm.current_password}
+                            onChange={(e) => setCredForm({ ...credForm, current_password: e.target.value })}
+                            required
+                            className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl py-3 pl-10 pr-3.5 text-[14px] text-[#2d241e] outline-none focus:border-[#c4622d] focus:bg-white transition-all w-full"
+                            style={{ fontFamily: dmSans }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
+                            New Password *
+                          </label>
+                          <div className="relative">
+                            <Key className="w-4 h-4 text-[#998b7e] absolute left-3.5 top-3.5" />
+                            <input
+                              type="password"
+                              placeholder="New password"
+                              value={credForm.new_password}
+                              onChange={(e) => setCredForm({ ...credForm, new_password: e.target.value })}
+                              required
+                              className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl py-3 pl-10 pr-3.5 text-[14px] text-[#2d241e] outline-none focus:border-[#c4622d] focus:bg-white transition-all w-full"
+                              style={{ fontFamily: dmSans }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                          <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
+                            Confirm New Password *
+                          </label>
+                          <div className="relative">
+                            <Key className="w-4 h-4 text-[#998b7e] absolute left-3.5 top-3.5" />
+                            <input
+                              type="password"
+                              placeholder="Confirm password"
+                              value={credForm.confirm_password}
+                              onChange={(e) => setCredForm({ ...credForm, confirm_password: e.target.value })}
+                              required
+                              className="bg-[#faf8f5] border border-[#d9d1c7] rounded-xl py-3 pl-10 pr-3.5 text-[14px] text-[#2d241e] outline-none focus:border-[#c4622d] focus:bg-white transition-all w-full"
+                              style={{ fontFamily: dmSans }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+
+                  <div className="pt-4 border-t border-[#f0eae1] flex justify-end">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      form="admin-cred-form"
+                      disabled={savingCreds}
+                      className="flex items-center gap-2 bg-[#c4622d] hover:bg-[#b5562a] text-white px-6 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md disabled:opacity-50 cursor-pointer"
+                      style={{ fontFamily: dmSans }}
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>{savingCreds ? "Updating Credentials..." : "Update Credentials"}</span>
+                    </motion.button>
+                  </div>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

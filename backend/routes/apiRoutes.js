@@ -14,17 +14,19 @@ import {
   createBooking,
   updateBookingStatus,
   deleteBooking,
+  getSettings,
+  updateSettings,
+  updateAdminCredentials,
 } from '../controllers/adminController.js';
 import { handleContactEnquiry } from '../controllers/contactController.js';
 
 const router = express.Router();
 
-// Runtime Config API
-router.get('/config', (req, res) => {
-  res.json({
-    whatsappNumber: process.env.WHATSAPP_NUMBER || '',
-  });
-});
+// Runtime Config / Settings API (Public)
+router.get('/config', getSettings);
+router.get('/settings', getSettings);
+router.put('/settings', updateSettings);
+router.put('/admin/credentials', updateAdminCredentials);
 
 // Admin Auth API
 router.post('/admin/login', loginAdmin);

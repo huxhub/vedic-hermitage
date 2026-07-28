@@ -436,3 +436,88 @@ export const deleteBooking = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to delete booking.' });
   }
 };
+
+// Get Site Settings (WhatsApp Number & Contact Number)
+export const getSettings = async (req, res) => {
+  try {
+    const pool = await getDbPool();
+    const [rows] = await pool.query('SELECT * FROM settings WHERE id = 1');
+    if (rows.length > 0) {
+      return res.status(200).json({
+        success: true,
+        settings: {
+          whatsapp_number: rows[0].whatsapp_number || '+91 90613 13555',
+          contact_number: rows[0].contact_number || '+91 90613 13555',
+        },
+      });
+    }
+  } catch (err) {
+    console.error('[Get Settings Error]:', err);
+  }
+  return res.status(200).json({
+    success: true,
+    settings: {
+      whatsapp_number: process.env.WHATSAPP_NUMBER || '+91 90613 13555',
+      contact_number: process.env.CONTACT_NUMBER || '+91 90613 13555',
+    },
+  });
+};
+
+// Update Site Settings
+export const updateSettings = async (req, res) => {
+  const { whatsapp_number, contact_number } = req.body;
+  try {
+    const pool = await getDbPool();
+    await pool.query(
+      'INSERT INTO settings (id, whatsapp_number, contact_number) VALUES (1, ?, ?) ON DUPLICATE KEY UPDATE whatsapp_number = VALUES(whatsapp_number), contact_number = VALUES(contact_number)',
+      [whatsapp_number || '+91 90613 13555', contact_number || '+91 90613 13555']
+    );
+    return res.status(200).json({
+      success: true,
+      message: 'Site settings updated successfully!',
+      settings: {
+        whatsapp_number: whatsapp_number || '+91 90613 13555',
+        contact_number: contact_number || '+91 90613 13555',
+      },
+    });
+  } catch (err) {
+    console.error('[Update Settings Error]:', err);
+    return res.status(500).json({ success: false, message: 'Failed to update settings.' });
+  }
+};
+
+// Update Admin Username & Password
+export const updateAdminCredentials = async (req, res) => {
+  const { current_password, new_username, new_password } = req.body;
+  if (!current_password || !new_username || !new_password) {
+    return res.status(400).json({
+      success: false,
+      message: 'Current password, new username, and new password are required.',
+    });
+  }
+
+  try {
+    const pool = await getDbPool();
+    // Verify current password
+    const [rows] = await pool.query('SELECT * FROM admin_users WHERE password = ? LIMIT 1', [current_password]);
+    if (rows.length === 0) {
+      return res.status(401).json({ success: false, message: 'Incorrect current password.' });
+    }
+
+    const adminId = rows[0].id;
+    await pool.query('UPDATE admin_users SET username = ?, password = ? WHERE id = ?', [
+      new_username,
+      new_password,
+      adminId,
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Admin credentials updated successfully!',
+      username: new_username,
+    });
+  } catch (err) {
+    console.error('[Update Admin Credentials Error]:', err);
+    return res.status(500).json({ success: false, message: 'Failed to update admin credentials.' });
+  }
+};

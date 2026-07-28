@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { ParallaxHero, PageHeroContent, playfair, dmSans, fadeUp, dur } from "./shared";
 import { sendContactEmail } from "@/utils/sendEmail";
@@ -8,24 +8,35 @@ import mapSvg from "@/imports/contact/map.svg";
 
 const GOOGLE_MAPS_URL = "https://www.google.com/maps/place/Vedic+Hermitage+-+Ayur+Mana/@10.7938681,76.3028862,17z/data=!3m1!4b1!4m6!3m5!1s0x3ba7dbaf65d2dbd1:0x474377487349aa9a!8m2!3d10.7938681!4d76.3028862";
 
-const contactInfo = [
-  { label: "Address", value: "Swastika Ayurveda Foundation , Vedic Hermitage , Edakode Vaniyamkulam , Ottapalam, Palakkad" },
-  { label: "Phone", value: "+91 9061313555 / +91 9207313555" },
-  { label: "Email", value: "info@vedichermitage.com" },
-  { label: "Working Hours", value: "Mon–Sun: 8 AM – 8 PM " },
-];
-
-const navLinks = [
-  { label: "How to reach us", href: GOOGLE_MAPS_URL },
-  { label: "Language spoken", href: "#" },
-  { label: "Nearest airport", href: "#" },
-];
-
 export default function ContactPage() {
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [contactNumber, setContactNumber] = useState("+91 9061313555 / +91 9207313555");
+
+  useEffect(() => {
+    const loadSettings = () => {
+      fetch("/api/settings")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.settings && data.settings.contact_number) {
+            setContactNumber(data.settings.contact_number);
+          }
+        })
+        .catch((err) => console.warn("Could not load settings:", err));
+    };
+    loadSettings();
+    window.addEventListener("vedic-settings-updated", loadSettings);
+    return () => window.removeEventListener("vedic-settings-updated", loadSettings);
+  }, []);
+
+  const contactInfo = [
+    { label: "Address", value: "Swastika Ayurveda Foundation , Vedic Hermitage , Edakode Vaniyamkulam , Ottapalam, Palakkad" },
+    { label: "Phone", value: contactNumber },
+    { label: "Email", value: "info@vedichermitage.com" },
+    { label: "Working Hours", value: "Mon–Sun: 8 AM – 8 PM " },
+  ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

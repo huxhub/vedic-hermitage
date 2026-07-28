@@ -431,3 +431,69 @@ export async function deleteBookingRecord(id: number): Promise<boolean> {
   }
   return true;
 }
+
+export interface SiteSettings {
+  whatsapp_number: string;
+  contact_number: string;
+}
+
+const SETTINGS_KEY = "vedic_site_settings";
+
+export async function fetchSiteSettings(): Promise<SiteSettings> {
+  const defaultSettings: SiteSettings = {
+    whatsapp_number: "+91 90613 13555",
+    contact_number: "+91 90613 13555",
+  };
+  try {
+    const res = await fetch("/api/settings");
+    const data = await res.json();
+    if (res.ok && data.settings) {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(data.settings));
+      return data.settings;
+    }
+  } catch (err) {
+    console.warn("Could not fetch settings from server API, using local cache:", err);
+  }
+  const cached = localStorage.getItem(SETTINGS_KEY);
+  return cached ? JSON.parse(cached) : defaultSettings;
+}
+
+export async function updateSiteSettings(settings: SiteSettings): Promise<{ success: boolean; message?: string }> {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  window.dispatchEvent(new CustomEvent("vedic-settings-updated", { detail: settings }));
+
+  try {
+    const res = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      return { success: true, message: data.message || "Settings updated successfully!" };
+    }
+    return { success: false, message: data.message || "Failed to update settings." };
+  } catch (err) {
+    console.error("Error updating site settings on server:", err);
+    return { success: true, message: "Settings saved locally." };
+  }
+}
+
+export async function updateAdminCredentials(payload: {
+  current_password: string;
+  new_username: string;
+  new_password: string;
+}): Promise<{ success: boolean; message?: string }> {
+  try {
+    const res = await fetch("/api/admin/credentials", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    return { success: res.ok && data.success, message: data.message };
+  } catch (err) {
+    console.error("Error updating admin credentials:", err);
+    return { success: false, message: "Server connection failed." };
+  }
+}
