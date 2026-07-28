@@ -3,14 +3,22 @@ import { motion, AnimatePresence } from "motion/react";
 
 export default function WhatsAppWidget() {
   const [visible, setVisible] = useState(false);
-  const rawNumber = import.meta.env.VITE_WHATSAPP_NUMBER || "";
-  const whatsappNumber = rawNumber.replace(/[^\d]/g, "");
-  const defaultMessage = encodeURIComponent("Hello! I would like to inquire about Vedic Hermitage.");
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${defaultMessage}`;
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+
+  useEffect(() => {
+    // Fetch runtime server configuration
+    fetch("/api/config")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.whatsappNumber) {
+          setWhatsappNumber(data.whatsappNumber.replace(/[^\d]/g, ""));
+        }
+      })
+      .catch((err) => console.warn("Could not load runtime config:", err));
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
-      // Appear only after scrolling down past the Hero section (~350px)
       if (window.scrollY > 350) {
         setVisible(true);
       } else {
@@ -22,6 +30,10 @@ export default function WhatsAppWidget() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const numToUse = whatsappNumber || "919061313555";
+  const defaultMessage = encodeURIComponent("Hello! I would like to inquire about Vedic Hermitage.");
+  const whatsappUrl = `https://wa.me/${numToUse}?text=${defaultMessage}`;
 
   return (
     <AnimatePresence>
@@ -39,7 +51,7 @@ export default function WhatsAppWidget() {
             rel="noopener noreferrer"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            className="w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 relative group"
+            className="w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg hover:shadow-2xl transition-all duration-300 relative group cursor-pointer"
             aria-label="Chat on WhatsApp"
           >
             {/* Pulse animation ring */}

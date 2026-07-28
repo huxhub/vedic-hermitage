@@ -23,6 +23,16 @@ function emailApiPlugin(env) {
   return {
     name: 'email-api-plugin',
     configureServer(server) {
+      // Runtime configuration endpoint
+      server.middlewares.use('/api/config', (req, res) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({
+          whatsappNumber: env.WHATSAPP_NUMBER || process.env.WHATSAPP_NUMBER || '',
+        }));
+      });
+
+      // Contact form submission endpoint
       server.middlewares.use('/api/contact', async (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;
@@ -47,7 +57,7 @@ function emailApiPlugin(env) {
             const nodemailer = await import('nodemailer');
             const emailUser = env.EMAIL_USER || process.env.EMAIL_USER || '';
             const emailPass = env.EMAIL_PASS || process.env.EMAIL_PASS || '';
-            const recipientEmail = env.VITE_CONTACT_RECIPIENT_EMAIL || process.env.VITE_CONTACT_RECIPIENT_EMAIL || '';
+            const recipientEmail = env.CONTACT_RECIPIENT_EMAIL || process.env.CONTACT_RECIPIENT_EMAIL || '';
 
             const transporter = nodemailer.createTransport({
               service: 'gmail',
