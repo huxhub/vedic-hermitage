@@ -365,23 +365,23 @@ export default function AdminDashboardPage() {
                   {pkgs.map((pkg) => (
                     <div
                       key={pkg.id}
-                      className="bg-white p-6 rounded-2xl border border-[#e2ded8] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between gap-6 relative group"
+                      className="bg-white p-6 rounded-2xl border border-[#e2ded8] shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between gap-6 relative group overflow-hidden min-w-0 max-w-full"
                     >
-                      <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-bold text-[#c4622d] uppercase tracking-wider bg-[#faf0ea] border border-[#f5dfd5] px-3 py-1 rounded-full">
+                      <div className="flex flex-col gap-4 min-w-0">
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <span className="text-[11px] font-bold text-[#c4622d] uppercase tracking-wider bg-[#faf0ea] border border-[#f5dfd5] px-3 py-1 rounded-full truncate max-w-[200px]" title={pkg.subtitle || pkg.label}>
                             {pkg.subtitle || pkg.label}
                           </span>
                           <button
                             onClick={() => handleDeletePkg(pkg.id)}
-                            className="text-[#998b7e] hover:text-red-600 transition-colors p-1 cursor-pointer"
+                            className="text-[#998b7e] hover:text-red-600 transition-colors p-1 cursor-pointer shrink-0"
                             title="Delete Package"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
 
-                        <h3 className="text-[20px] font-medium text-[#2d241e]" style={{ fontFamily: playfair }}>
+                        <h3 className="text-[20px] font-medium text-[#2d241e] break-words max-w-full" style={{ fontFamily: playfair }}>
                           {pkg.title}
                         </h3>
 
@@ -405,13 +405,13 @@ export default function AdminDashboardPage() {
                       </div>
 
                       {pkg.items && pkg.items.length > 0 && (
-                        <div className="pt-4 border-t border-[#f2ede6] flex flex-col gap-2.5">
+                        <div className="pt-4 border-t border-[#f2ede6] flex flex-col gap-2.5 min-w-0">
                           <span className="text-[12px] font-semibold text-[#786c62]">Included Services:</span>
-                          <ul className="flex flex-col gap-2">
+                          <ul className="flex flex-col gap-2 min-w-0">
                             {pkg.items.slice(0, 5).map((item, idx) => (
-                              <li key={idx} className="flex items-center gap-2.5 text-[13px] text-[#4a3f36]" style={{ fontFamily: dmSans }}>
+                              <li key={idx} className="flex items-center gap-2.5 text-[13px] text-[#4a3f36] min-w-0" style={{ fontFamily: dmSans }}>
                                 <CheckCircle2 className="w-4 h-4 text-[#2c4a2e] shrink-0" />
-                                <span>{item}</span>
+                                <span className="break-words min-w-0 flex-1">{item}</span>
                               </li>
                             ))}
                           </ul>

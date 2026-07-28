@@ -476,15 +476,15 @@ export default function HomePage() {
           </motion.div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {homePkgList.map((pkg, i) => (
-              <motion.div key={pkg.title} className="bg-white/[0.03] border border-white/[0.13] rounded-[12px] p-8 sm:p-12 flex flex-col justify-between" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} transition={{ ...dur, delay: i * 0.12 }}>
-                <div className="flex flex-col gap-8">
-                  <div className="flex flex-col gap-2">
-                    <h3 className="text-[28px] sm:text-[36px] text-white font-medium" style={{ fontFamily: playfair }}>{pkg.title}</h3>
-                    <span className="text-[13px] sm:text-[14px] font-semibold uppercase text-[#c4622d]" style={{ fontFamily: dmSans }}>{pkg.subtitle}</span>
+              <motion.div key={pkg.title} className="bg-white/[0.03] border border-white/[0.13] rounded-[12px] p-8 sm:p-12 flex flex-col justify-between overflow-hidden min-w-0 max-w-full" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} transition={{ ...dur, delay: i * 0.12 }}>
+                <div className="flex flex-col gap-8 min-w-0">
+                  <div className="flex flex-col gap-2 min-w-0">
+                    <h3 className="text-[28px] sm:text-[36px] text-white font-medium break-words max-w-full" style={{ fontFamily: playfair }}>{pkg.title}</h3>
+                    <span className="text-[13px] sm:text-[14px] font-semibold uppercase text-[#c4622d] break-words max-w-full" style={{ fontFamily: dmSans }}>{pkg.subtitle}</span>
                   </div>
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-4 min-w-0">
                     {pkg.items.map((item) => (
-                      <div key={item} className="flex items-center gap-3"><SmallCheckSVG /><span className="text-[15px] sm:text-[16px] text-[#eae7e2] opacity-80" style={{ fontFamily: dmSans }}>{item}</span></div>
+                      <div key={item} className="flex items-center gap-3 min-w-0"><SmallCheckSVG /><span className="text-[15px] sm:text-[16px] text-[#eae7e2] opacity-80 break-words min-w-0 flex-1" style={{ fontFamily: dmSans }}>{item}</span></div>
                     ))}
                   </div>
                 </div>

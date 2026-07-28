@@ -165,18 +165,18 @@ function PackageCard({ pkg, index }: { pkg: (typeof packages)[0]; index: number 
         {/* Left: label + title + features */}
         <div className="flex flex-col gap-6 md:gap-10 flex-1 min-w-0 w-full">
           <div className="flex flex-col gap-2">
-            <span className="text-[13px] sm:text-[14px] font-semibold uppercase" style={{ fontFamily: dmSans, color: pkg.subtitleColor }}>
+            <span className="text-[11px] sm:text-[13px] font-semibold uppercase tracking-wider break-words max-w-full" style={{ fontFamily: dmSans, color: pkg.subtitleColor }}>
               {pkg.label}
             </span>
-            <h2 className="text-[28px] sm:text-[36px] md:text-[48px] font-medium leading-[1.15]" style={{ fontFamily: playfair, color: pkg.textColor }}>
+            <h2 className="text-[28px] sm:text-[36px] md:text-[48px] font-medium leading-[1.15] break-words max-w-full" style={{ fontFamily: playfair, color: pkg.textColor }}>
               {pkg.title}
             </h2>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 min-w-0">
             {pkg.items.map((item) => (
-              <div key={item} className="flex items-center gap-3">
+              <div key={item} className="flex items-center gap-3 min-w-0">
                 <CheckIcon white={!isLight} />
-                <span className="text-[14px] sm:text-[16px] opacity-80" style={{ fontFamily: dmSans, color: pkg.textColor }}>
+                <span className="text-[14px] sm:text-[16px] opacity-80 break-words min-w-0 flex-1" style={{ fontFamily: dmSans, color: pkg.textColor }}>
                   {item}
                 </span>
               </div>
