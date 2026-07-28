@@ -340,6 +340,7 @@ export async function createBooking(booking: {
   email: string;
   phone?: string;
   country?: string;
+  city?: string;
   arrival_date?: string;
   health_notes?: string;
 }): Promise<{ success: boolean; booking?: BookingItem }> {
