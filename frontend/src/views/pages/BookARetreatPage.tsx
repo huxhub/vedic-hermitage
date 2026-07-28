@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router";
 import { playfair, dmSans, fadeUp, dur } from "./shared";
 import svgPaths from "@/imports/BookARetreat/svg-0h9ir3tshq";
+import { fetchPackages } from "@/data/adminApi";
 
 // ── Trust badge check icon ─────────────────────────────────────────────────────
 function TrustCheck() {
@@ -14,7 +15,7 @@ function TrustCheck() {
 }
 
 // ── Data ───────────────────────────────────────────────────────────────────────
-const packages = [
+const initialPackages = [
   { id: "7day", name: "7-Day Rejuvenation Retreat", duration: "7 Days", price: "₹45,000 / person", subtitle: "Restorative Healing" },
   { id: "14day", name: "14-Day Panchakarma Detox", duration: "14 Days", price: "₹85,000 / person", subtitle: "Deep Purification" },
   { id: "21day", name: "21-Day Total Transformation", duration: "21 Days", price: "₹1,40,000 / person", subtitle: "Life Reset Program" },
@@ -154,11 +155,12 @@ function SelectionSummary({
 
 // ── Step 1: Package selection ──────────────────────────────────────────────────
 function Step1({
-  selectedId, onSelect, guests, onGuestsChange, onNext,
+  selectedId, onSelect, guests, onGuestsChange, onNext, pkgList,
 }: {
   selectedId: string; onSelect: (id: string) => void;
   guests: string; onGuestsChange: (g: string) => void;
   onNext: () => void;
+  pkgList: typeof initialPackages;
 }) {
   return (
     <motion.div
@@ -177,7 +179,7 @@ function Step1({
       </div>
 
       <div className="flex flex-col gap-4">
-        {packages.map((pkg) => {
+        {pkgList.map((pkg) => {
           const active = selectedId === pkg.id;
           return (
             <div
@@ -429,8 +431,28 @@ export default function BookARetreatPage() {
   const [guests, setGuests] = useState("01 Person");
   const [form, setForm] = useState<Record<string, string>>({});
   const [confirmed, setConfirmed] = useState(false);
+  const [pkgList, setPkgList] = useState(initialPackages);
 
-  const selectedPkg = packages.find((p) => p.id === selectedPkgId);
+  useEffect(() => {
+    const updatePkgs = () => {
+      fetchPackages().then((data) => {
+        if (data && data.length > 0) {
+          setPkgList((prev) =>
+            prev.map((p) => {
+              const updated = data.find((d) => d.id === p.id);
+              return updated ? { ...p, price: `${updated.price} / person` } : p;
+            })
+          );
+        }
+      });
+    };
+
+    updatePkgs();
+    window.addEventListener("vedic-packages-updated", updatePkgs);
+    return () => window.removeEventListener("vedic-packages-updated", updatePkgs);
+  }, []);
+
+  const selectedPkg = pkgList.find((p) => p.id === selectedPkgId);
   const updateForm = (key: string, val: string) => setForm((f) => ({ ...f, [key]: val }));
 
   return (
@@ -478,6 +500,7 @@ export default function BookARetreatPage() {
                     guests={guests}
                     onGuestsChange={setGuests}
                     onNext={() => setStep(2)}
+                    pkgList={pkgList}
                   />
                 )}
                 {step === 2 && (

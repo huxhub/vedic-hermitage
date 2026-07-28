@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { motion } from "motion/react";
 import { Label, CircleCheckSVG, SmallCheckSVG, ClockSVG, playfair, dmSans, fadeUp, dur } from "./shared";
 import svgPaths from "@/imports/AyurvedaLandingPage-2/svg-se7b6a4pns";
+import { fetchFeedbacks } from "@/data/adminApi";
 import ClipPathGroup from "@/imports/ClipPathGroup/index";
 
 // ── Images ────────────────────────────────────────────────────────────────────
@@ -356,6 +357,29 @@ function HeroParallaxSection() {
 
 export default function HomePage() {
   const [email, setEmail] = useState("");
+  const [fbList, setFbList] = useState(testimonials);
+
+  useEffect(() => {
+    const updateFbs = () => {
+      fetchFeedbacks().then((data) => {
+        if (data && data.length > 0) {
+          const avatars = [imgAvatar1, imgAvatar2, imgAvatar3];
+          setFbList(
+            data.map((f, i) => ({
+              quote: f.quote,
+              name: f.name,
+              location: f.location || "",
+              avatar: f.avatar || avatars[i % avatars.length],
+            }))
+          );
+        }
+      });
+    };
+
+    updateFbs();
+    window.addEventListener("vedic-feedbacks-updated", updateFbs);
+    return () => window.removeEventListener("vedic-feedbacks-updated", updateFbs);
+  }, []);
 
   return (
     <div>
@@ -539,7 +563,7 @@ export default function HomePage() {
           <div className="marquee-container py-4">
             <div className="animate-marquee flex">
               {/* Set A */}
-              {[...testimonials, ...testimonials].map((t, i) => (
+              {[...fbList, ...fbList].map((t, i) => (
                 <div key={`set-a-${i}`} className="pr-8 shrink-0">
                   <div className="bg-white rounded-[12px] p-6 sm:p-10 flex flex-col gap-6 shadow-[0px_4px_12px_rgba(0,0,0,0.03)] w-[290px] sm:w-[420px] h-full">
                     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="opacity-30">
@@ -560,7 +584,7 @@ export default function HomePage() {
               ))}
 
               {/* Set B */}
-              {[...testimonials, ...testimonials].map((t, i) => (
+              {[...fbList, ...fbList].map((t, i) => (
                 <div key={`set-b-${i}`} className="pr-8 shrink-0">
                   <div className="bg-white rounded-[12px] p-6 sm:p-10 flex flex-col gap-6 shadow-[0px_4px_12px_rgba(0,0,0,0.03)] w-[290px] sm:w-[420px] h-full">
                     <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="opacity-30">

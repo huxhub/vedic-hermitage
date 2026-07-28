@@ -20,13 +20,11 @@ export default function AdminDashboardPage() {
   // Package Management State
   const [pkgs, setPkgs] = useState<PackageItem[]>([]);
   const [savingPkgs, setSavingPkgs] = useState(false);
-  const [pkgMsg, setPkgMsg] = useState("");
 
   // Feedback Management State
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [newFb, setNewFb] = useState({ name: "", location: "", quote: "", rating: 5 });
   const [savingFb, setSavingFb] = useState(false);
-  const [fbMsg, setFbMsg] = useState("");
 
   useEffect(() => {
     loadData();
@@ -53,17 +51,10 @@ export default function AdminDashboardPage() {
 
   const handleSavePrices = async () => {
     setSavingPkgs(true);
-    setPkgMsg("");
     try {
-      const res = await updatePackages(pkgs);
-      if (res.success) {
-        setPkgMsg("Package prices updated successfully in MySQL DB!");
-      } else {
-        setPkgMsg("Failed to update package prices.");
-      }
+      await updatePackages(pkgs);
     } catch (err) {
       console.error(err);
-      setPkgMsg("Error saving package prices.");
     } finally {
       setSavingPkgs(false);
     }
@@ -74,19 +65,14 @@ export default function AdminDashboardPage() {
     if (!newFb.name || !newFb.quote) return;
 
     setSavingFb(true);
-    setFbMsg("");
     try {
       const res = await addFeedback(newFb);
       if (res.success && res.feedback) {
         setFeedbacks((prev) => [res.feedback!, ...prev]);
         setNewFb({ name: "", location: "", quote: "", rating: 5 });
-        setFbMsg("New feedback added successfully to MySQL DB!");
-      } else {
-        setFbMsg("Failed to add feedback.");
       }
     } catch (err) {
       console.error(err);
-      setFbMsg("Error adding feedback.");
     } finally {
       setSavingFb(false);
     }
@@ -175,12 +161,6 @@ export default function AdminDashboardPage() {
               </button>
             </div>
 
-            {pkgMsg && (
-              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg text-sm">
-                {pkgMsg}
-              </div>
-            )}
-
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {pkgs.map((pkg) => (
                 <div
@@ -235,12 +215,6 @@ export default function AdminDashboardPage() {
               <h3 className="text-[20px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
                 Add New Customer Feedback / Review
               </h3>
-
-              {fbMsg && (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-lg text-sm">
-                  {fbMsg}
-                </div>
-              )}
 
               <form onSubmit={handleAddFeedback} className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -309,7 +283,7 @@ export default function AdminDashboardPage() {
                   className="self-start bg-[#2c4a2e] hover:bg-[#203722] text-white px-6 py-2.5 rounded-lg text-[14px] font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                   style={{ fontFamily: dmSans }}
                 >
-                  {savingFb ? "Adding..." : "Add Feedback to Database"}
+                  {savingFb ? "Adding..." : "Add Feedback"}
                 </button>
               </form>
             </div>
