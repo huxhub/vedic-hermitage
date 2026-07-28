@@ -98,12 +98,18 @@ async function initSchema(dbPool) {
       email VARCHAR(255) NOT NULL,
       phone VARCHAR(100),
       country VARCHAR(100),
+      city VARCHAR(100),
       arrival_date VARCHAR(100),
       health_notes TEXT,
       status VARCHAR(50) DEFAULT 'Pending',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
+  try {
+    await dbPool.query('ALTER TABLE bookings ADD COLUMN city VARCHAR(100)');
+  } catch (e) {
+    // Column already exists or ignore if fails
+  }
 
   // Enquiries / Messages table
   await dbPool.query(`

@@ -869,10 +869,10 @@ export default function AdminDashboardPage() {
                               <h4 className="text-[17px] font-semibold text-[#2d241e] truncate" style={{ fontFamily: dmSans }}>
                                 {b.name}
                               </h4>
-                              {b.country && (
+                              {(b.country || b.city) && (
                                 <span className="text-[12px] text-[#786c62] flex items-center gap-1 truncate" style={{ fontFamily: dmSans }}>
                                   <MapPin className="w-3 h-3 text-[#c4622d] shrink-0" />
-                                  {b.country}
+                                  {[b.city, b.country].filter(Boolean).join(", ")}
                                 </span>
                               )}
                             </div>
@@ -925,11 +925,11 @@ export default function AdminDashboardPage() {
 
                           {/* Health Notes */}
                           {b.health_notes && (
-                            <div className="bg-[#fefce8] p-3 rounded-xl border border-[#fef08a] flex flex-col gap-1 min-w-0">
+                            <div className="bg-[#fefce8] p-3 rounded-xl border border-[#fef08a] flex flex-col gap-1 min-w-0 max-w-full overflow-hidden">
                               <span className="text-[11px] font-bold text-[#a16207] uppercase tracking-wider flex items-center gap-1" style={{ fontFamily: dmSans }}>
                                 <FileText className="w-3 h-3" /> Health Notes / Special Needs
                               </span>
-                              <p className="text-[12px] text-[#713f12] leading-relaxed break-words" style={{ fontFamily: dmSans }}>
+                              <p className="text-[12px] text-[#713f12] leading-relaxed break-all [word-break:break-word] [overflow-wrap:anywhere] min-w-0 max-w-full" style={{ fontFamily: dmSans }}>
                                 {b.health_notes}
                               </p>
                             </div>

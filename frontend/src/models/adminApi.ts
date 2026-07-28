@@ -28,6 +28,7 @@ export interface BookingItem {
   email: string;
   phone?: string;
   country?: string;
+  city?: string;
   arrival_date?: string;
   health_notes?: string;
   status: "Pending" | "Confirmed" | "Completed" | "Cancelled";

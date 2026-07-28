@@ -30,7 +30,8 @@ const formFields = [
   { key: "lastName", label: "Last Name", placeholder: "Enter last name", type: "text" },
   { key: "email", label: "Email Address", placeholder: "Enter email address", type: "email" },
   { key: "phone", label: "Phone Number", placeholder: "Enter phone number", type: "tel" },
-  { key: "country", label: "Country", placeholder: "Enter country", type: "text" },
+  { key: "country", label: "Country", placeholder: "e.g. United States, UK, Germany, India", type: "text" },
+  { key: "city", label: "City / Place", placeholder: "e.g. London, New York, Kochi", type: "text" },
   { key: "arrivalDate", label: "Arrival Date", placeholder: "Enter arrival date", type: "date" },
 ];
 
@@ -363,6 +364,7 @@ function Step3({
     { label: "Email", value: form.email || "—" },
     { label: "Phone", value: form.phone || "—" },
     { label: "Country", value: form.country || "—" },
+    { label: "City / Place", value: form.city || form.location || "—" },
     { label: "Arrival Date", value: form.arrivalDate || "—" },
   ];
 
@@ -387,9 +389,9 @@ function Step3({
       </div>
 
       {form.healthNotes && (
-        <div className="bg-[#fdf4e3] rounded p-4">
-          <p className="text-[13px] font-semibold text-[#6b5e54] mb-1" style={{ fontFamily: dmSans }}>Health Notes</p>
-          <p className="text-[14px] text-[#2d241e]" style={{ fontFamily: dmSans }}>{form.healthNotes}</p>
+        <div className="bg-[#fdf4e3] rounded p-4 border border-[#fef08a] overflow-hidden min-w-0 max-w-full">
+          <p className="text-[13px] font-semibold text-[#6b5e54] mb-1" style={{ fontFamily: dmSans }}>Health Notes / Special Demands</p>
+          <p className="text-[14px] text-[#2d241e] break-all [word-break:break-word] [overflow-wrap:anywhere] min-w-0 max-w-full" style={{ fontFamily: dmSans }}>{form.healthNotes}</p>
         </div>
       )}
 
@@ -403,7 +405,7 @@ function Step3({
         </button>
         <button
           onClick={onConfirm}
-          className="bg-[#c4622d] text-white px-8 py-3 rounded-md text-[14px] font-semibold uppercase hover:bg-[#b5562a] transition-colors"
+          className="bg-[#c4622d] text-white px-8 py-3 rounded-md text-[14px] font-semibold uppercase hover:bg-[#b5562a] transition-colors cursor-pointer"
           style={{ fontFamily: dmSans }}
         >
           Confirm Booking
@@ -457,6 +459,7 @@ export default function BookARetreatPage() {
         email: form.email || "",
         phone: form.phone || "",
         country: form.country || "",
+        city: form.city || form.location || "",
         arrival_date: form.arrivalDate || "",
         health_notes: form.healthNotes || "",
       });

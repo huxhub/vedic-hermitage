@@ -259,7 +259,7 @@ export const getBookings = async (req, res) => {
 
 // Create New Booking & Send Admin Email Notification
 export const createBooking = async (req, res) => {
-  const { package_name, package_price, guests, name, email, phone, country, arrival_date, health_notes } = req.body;
+  const { package_name, package_price, guests, name, email, phone, country, city, arrival_date, health_notes } = req.body;
   if (!name || !email || !package_name) {
     return res.status(400).json({ success: false, message: 'Name, email, and package are required.' });
   }
@@ -267,7 +267,7 @@ export const createBooking = async (req, res) => {
   try {
     const pool = await getDbPool();
     const [result] = await pool.query(
-      'INSERT INTO bookings (package_name, package_price, guests, name, email, phone, country, arrival_date, health_notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO bookings (package_name, package_price, guests, name, email, phone, country, city, arrival_date, health_notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         package_name,
         package_price || '',
@@ -276,6 +276,7 @@ export const createBooking = async (req, res) => {
         email,
         phone || '',
         country || '',
+        city || '',
         arrival_date || '',
         health_notes || '',
         'Pending',
@@ -339,6 +340,10 @@ export const createBooking = async (req, res) => {
                   <td style="padding: 10px 12px; color: #2d241e; border-bottom: 1px solid #f5f0eb;">${country || 'Not Specified'}</td>
                 </tr>
                 <tr>
+                  <td style="padding: 10px 12px; color: #6b5e54; font-weight: 600; border-bottom: 1px solid #f5f0eb;">City / Place</td>
+                  <td style="padding: 10px 12px; color: #2d241e; border-bottom: 1px solid #f5f0eb;">${city || 'Not Specified'}</td>
+                </tr>
+                <tr>
                   <td style="padding: 10px 12px; color: #6b5e54; font-weight: 600; border-bottom: 1px solid #f5f0eb;">Number of Guests</td>
                   <td style="padding: 10px 12px; color: #2d241e; border-bottom: 1px solid #f5f0eb;">${guests || '01 Person'}</td>
                 </tr>
@@ -354,7 +359,7 @@ export const createBooking = async (req, res) => {
 
               ${health_notes ? `
                 <h3 style="color: #2c4a2e; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-top: 0; margin-bottom: 12px;">Health Notes / Special Needs</h3>
-                <div style="background-color: #fefce8; border: 1px solid #fef08a; border-radius: 8px; padding: 15px; color: #713f12; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${health_notes}</div>
+                <div style="background-color: #fefce8; border: 1px solid #fef08a; border-radius: 8px; padding: 15px; color: #713f12; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">${health_notes}</div>
               ` : ''}
 
               <div style="margin-top: 30px; text-align: center;">
@@ -391,6 +396,7 @@ export const createBooking = async (req, res) => {
         email,
         phone: phone || '',
         country: country || '',
+        city: city || '',
         arrival_date: arrival_date || '',
         health_notes: health_notes || '',
         status: 'Pending',
