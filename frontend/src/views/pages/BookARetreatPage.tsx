@@ -437,12 +437,14 @@ export default function BookARetreatPage() {
     const updatePkgs = () => {
       fetchPackages().then((data) => {
         if (data && data.length > 0) {
-          setPkgList((prev) =>
-            prev.map((p) => {
-              const updated = data.find((d) => d.id === p.id);
-              return updated ? { ...p, price: `${updated.price} / person` } : p;
-            })
-          );
+          const formatted = data.map((d) => ({
+            id: d.id,
+            name: d.title,
+            duration: d.duration || "7 Days",
+            price: d.price.includes("/ person") ? d.price : `${d.price} / person`,
+            subtitle: d.subtitle || d.label || "Custom Program",
+          }));
+          setPkgList(formatted);
         }
       });
     };

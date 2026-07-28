@@ -3,7 +3,7 @@ import { Link } from "react-router";
 import { motion } from "motion/react";
 import { Label, CircleCheckSVG, SmallCheckSVG, ClockSVG, playfair, dmSans, fadeUp, dur } from "./shared";
 import svgPaths from "@/imports/AyurvedaLandingPage-2/svg-se7b6a4pns";
-import { fetchFeedbacks } from "@/data/adminApi";
+import { fetchFeedbacks, fetchPackages } from "@/data/adminApi";
 import ClipPathGroup from "@/imports/ClipPathGroup/index";
 
 // ── Images ────────────────────────────────────────────────────────────────────
@@ -381,6 +381,27 @@ export default function HomePage() {
     return () => window.removeEventListener("vedic-feedbacks-updated", updateFbs);
   }, []);
 
+  const [homePkgList, setHomePkgList] = useState(packages);
+
+  useEffect(() => {
+    const updatePkgs = () => {
+      fetchPackages().then((data) => {
+        if (data && data.length > 0) {
+          const formatted = data.map((d) => ({
+            title: d.title,
+            subtitle: d.subtitle || d.label || "Wellness Retreat",
+            items: d.items || [],
+          }));
+          setHomePkgList(formatted);
+        }
+      });
+    };
+
+    updatePkgs();
+    window.addEventListener("vedic-packages-updated", updatePkgs);
+    return () => window.removeEventListener("vedic-packages-updated", updatePkgs);
+  }, []);
+
   return (
     <div>
       <HeroParallaxSection />
@@ -454,7 +475,7 @@ export default function HomePage() {
             <h2 className="text-[32px] sm:text-[44px] md:text-[56px] leading-[1.15] font-medium text-[#eae7e2] text-center" style={{ fontFamily: playfair }}>Healing Retreat Packages</h2>
           </motion.div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {packages.map((pkg, i) => (
+            {homePkgList.map((pkg, i) => (
               <motion.div key={pkg.title} className="bg-white/[0.03] border border-white/[0.13] rounded-[12px] p-8 sm:p-12 flex flex-col justify-between" variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} transition={{ ...dur, delay: i * 0.12 }}>
                 <div className="flex flex-col gap-8">
                   <div className="flex flex-col gap-2">

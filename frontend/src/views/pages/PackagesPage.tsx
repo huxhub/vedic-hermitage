@@ -213,16 +213,33 @@ export default function PackagesPage() {
   const [pkgData, setPkgData] = useState(packages);
 
   useEffect(() => {
-    fetchPackages().then((data) => {
-      if (data && data.length > 0) {
-        setPkgData((prev) =>
-          prev.map((p) => {
-            const updated = data.find((d) => d.id === p.id);
-            return updated ? { ...p, price: updated.price } : p;
-          })
-        );
-      }
-    });
+    const loadPkgs = () => {
+      fetchPackages().then((data) => {
+        if (data && data.length > 0) {
+          const formatted = data.map((d, index) => {
+            const isDark = index % 2 === 1;
+            return {
+              id: d.id,
+              label: d.subtitle || d.label || "Wellness Retreat",
+              title: d.title,
+              price: d.price,
+              priceSuffix: " / person",
+              bg: isDark ? "#2c4a2e" : "#faf6f0",
+              textColor: isDark ? "#ffffff" : "#2d241e",
+              subtitleColor: "#d4a843",
+              priceColor: isDark ? "#ffffff" : "#2d241e",
+              fromColor: isDark ? "#ffffff" : "#6b5e54",
+              items: d.items || [],
+            };
+          });
+          setPkgData(formatted);
+        }
+      });
+    };
+
+    loadPkgs();
+    window.addEventListener("vedic-packages-updated", loadPkgs);
+    return () => window.removeEventListener("vedic-packages-updated", loadPkgs);
   }, []);
 
   return (
