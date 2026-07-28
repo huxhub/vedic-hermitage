@@ -87,6 +87,24 @@ async function initSchema(dbPool) {
     // Column already LONGTEXT or ignore if fails
   }
 
+  // Bookings table
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS bookings (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      package_name VARCHAR(255) NOT NULL,
+      package_price VARCHAR(100),
+      guests VARCHAR(50),
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL,
+      phone VARCHAR(100),
+      country VARCHAR(100),
+      arrival_date VARCHAR(100),
+      health_notes TEXT,
+      status VARCHAR(50) DEFAULT 'Pending',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   // Enquiries / Messages table
   await dbPool.query(`
     CREATE TABLE IF NOT EXISTS enquiries (

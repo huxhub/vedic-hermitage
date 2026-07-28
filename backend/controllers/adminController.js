@@ -243,3 +243,91 @@ export const deleteFeedback = async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to delete feedback.' });
   }
 };
+
+// Get All Bookings
+export const getBookings = async (req, res) => {
+  try {
+    const pool = await getDbPool();
+    const [rows] = await pool.query('SELECT * FROM bookings ORDER BY id DESC');
+    return res.status(200).json({ success: true, bookings: rows });
+  } catch (err) {
+    console.error('[Get Bookings Error]:', err);
+    return res.status(500).json({ success: false, message: 'Failed to fetch bookings.' });
+  }
+};
+
+// Create New Booking
+export const createBooking = async (req, res) => {
+  const { package_name, package_price, guests, name, email, phone, country, arrival_date, health_notes } = req.body;
+  if (!name || !email || !package_name) {
+    return res.status(400).json({ success: false, message: 'Name, email, and package are required.' });
+  }
+
+  try {
+    const pool = await getDbPool();
+    const [result] = await pool.query(
+      'INSERT INTO bookings (package_name, package_price, guests, name, email, phone, country, arrival_date, health_notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        package_name,
+        package_price || '',
+        guests || '01 Person',
+        name,
+        email,
+        phone || '',
+        country || '',
+        arrival_date || '',
+        health_notes || '',
+        'Pending',
+      ]
+    );
+
+    return res.status(200).json({
+      success: true,
+      booking: {
+        id: result.insertId,
+        package_name,
+        package_price: package_price || '',
+        guests: guests || '01 Person',
+        name,
+        email,
+        phone: phone || '',
+        country: country || '',
+        arrival_date: arrival_date || '',
+        health_notes: health_notes || '',
+        status: 'Pending',
+        created_at: new Date().toISOString(),
+      },
+    });
+  } catch (err) {
+    console.error('[Create Booking Error]:', err);
+    return res.status(500).json({ success: false, message: 'Failed to save booking.' });
+  }
+};
+
+// Update Booking Status
+export const updateBookingStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    const pool = await getDbPool();
+    await pool.query('UPDATE bookings SET status = ? WHERE id = ?', [status || 'Pending', id]);
+    return res.status(200).json({ success: true, message: 'Booking status updated.' });
+  } catch (err) {
+    console.error('[Update Booking Status Error]:', err);
+    return res.status(500).json({ success: false, message: 'Failed to update booking status.' });
+  }
+};
+
+// Delete Booking
+export const deleteBooking = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const pool = await getDbPool();
+    await pool.query('DELETE FROM bookings WHERE id = ?', [id]);
+    return res.status(200).json({ success: true, message: 'Booking deleted.' });
+  } catch (err) {
+    console.error('[Delete Booking Error]:', err);
+    return res.status(500).json({ success: false, message: 'Failed to delete booking.' });
+  }
+};

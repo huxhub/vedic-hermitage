@@ -19,9 +19,25 @@ export interface FeedbackItem {
   created_at?: string;
 }
 
+export interface BookingItem {
+  id: number;
+  package_name: string;
+  package_price?: string;
+  guests?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  country?: string;
+  arrival_date?: string;
+  health_notes?: string;
+  status: "Pending" | "Confirmed" | "Completed" | "Cancelled";
+  created_at?: string;
+}
+
 const TOKEN_KEY = "vedic_admin_token";
 const PKGS_KEY = "vedic_packages";
 const FBS_KEY = "vedic_feedbacks";
+const BOOKINGS_KEY = "vedic_bookings";
 
 export const adminAuth = {
   getToken: () => localStorage.getItem(TOKEN_KEY),
@@ -310,6 +326,106 @@ export async function deleteFeedback(id: number): Promise<boolean> {
     });
   } catch (err) {
     console.error("Error deleting feedback on server:", err);
+  }
+  return true;
+}
+
+// ── Bookings API ─────────────────────────────────────────────────────────────
+export async function createBooking(booking: {
+  package_name: string;
+  package_price?: string;
+  guests?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  country?: string;
+  arrival_date?: string;
+  health_notes?: string;
+}): Promise<{ success: boolean; booking?: BookingItem }> {
+  const newBooking: BookingItem = {
+    id: Date.now(),
+    ...booking,
+    status: "Pending",
+    created_at: new Date().toISOString(),
+  };
+
+  const cached = localStorage.getItem(BOOKINGS_KEY);
+  let localBookings: BookingItem[] = cached ? JSON.parse(cached) : [];
+  localBookings = [newBooking, ...localBookings];
+  localStorage.setItem(BOOKINGS_KEY, JSON.stringify(localBookings));
+
+  window.dispatchEvent(new CustomEvent("vedic-bookings-updated", { detail: localBookings }));
+
+  try {
+    const res = await fetch("/api/bookings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(booking),
+    });
+    const data = await res.json();
+    if (res.ok && data.booking) {
+      return { success: true, booking: data.booking };
+    }
+  } catch (err) {
+    console.error("Error saving booking on server:", err);
+  }
+  return { success: true, booking: newBooking };
+}
+
+export async function fetchBookings(): Promise<BookingItem[]> {
+  const cached = localStorage.getItem(BOOKINGS_KEY);
+  let localBookings: BookingItem[] = cached ? JSON.parse(cached) : [];
+
+  try {
+    const res = await fetch("/api/bookings");
+    const data = await res.json();
+    if (res.ok && data.bookings) {
+      localStorage.setItem(BOOKINGS_KEY, JSON.stringify(data.bookings));
+      return data.bookings;
+    }
+  } catch (err) {
+    console.warn("Could not fetch bookings from server API, using local cache:", err);
+  }
+  return localBookings;
+}
+
+export async function updateBookingStatus(
+  id: number,
+  status: "Pending" | "Confirmed" | "Completed" | "Cancelled"
+): Promise<boolean> {
+  const cached = localStorage.getItem(BOOKINGS_KEY);
+  let localBookings: BookingItem[] = cached ? JSON.parse(cached) : [];
+  localBookings = localBookings.map((b) => (b.id === id ? { ...b, status } : b));
+  localStorage.setItem(BOOKINGS_KEY, JSON.stringify(localBookings));
+
+  window.dispatchEvent(new CustomEvent("vedic-bookings-updated", { detail: localBookings }));
+
+  try {
+    await fetch(`/api/bookings/${id}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+  } catch (err) {
+    console.error("Error updating booking status on server:", err);
+  }
+  return true;
+}
+
+export async function deleteBookingRecord(id: number): Promise<boolean> {
+  const cached = localStorage.getItem(BOOKINGS_KEY);
+  let localBookings: BookingItem[] = cached ? JSON.parse(cached) : [];
+  localBookings = localBookings.filter((b) => b.id !== id);
+  localStorage.setItem(BOOKINGS_KEY, JSON.stringify(localBookings));
+
+  window.dispatchEvent(new CustomEvent("vedic-bookings-updated", { detail: localBookings }));
+
+  try {
+    await fetch(`/api/bookings/${id}`, {
+      method: "DELETE",
+    });
+  } catch (err) {
+    console.error("Error deleting booking on server:", err);
   }
   return true;
 }

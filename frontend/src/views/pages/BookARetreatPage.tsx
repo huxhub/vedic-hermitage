@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router";
 import { playfair, dmSans, fadeUp, dur } from "./shared";
 import svgPaths from "@/imports/BookARetreat/svg-0h9ir3tshq";
-import { fetchPackages } from "@/data/adminApi";
+import { fetchPackages, createBooking } from "@/data/adminApi";
 
 // ── Trust badge check icon ─────────────────────────────────────────────────────
 function TrustCheck() {
@@ -446,6 +446,23 @@ export default function BookARetreatPage() {
   const selectedPkg = pkgList.find((p) => p.id === selectedPkgId);
   const updateForm = (key: string, val: string) => setForm((f) => ({ ...f, [key]: val }));
 
+  const handleConfirmBooking = async () => {
+    setConfirmed(true);
+    if (selectedPkg) {
+      await createBooking({
+        package_name: selectedPkg.name,
+        package_price: selectedPkg.price,
+        guests,
+        name: `${form.firstName || ""} ${form.lastName || ""}`.trim() || "Guest",
+        email: form.email || "",
+        phone: form.phone || "",
+        country: form.country || "",
+        arrival_date: form.arrivalDate || "",
+        health_notes: form.healthNotes || "",
+      });
+    }
+  };
+
   return (
     <div>
       {/* ── Hero ── */}
@@ -508,7 +525,7 @@ export default function BookARetreatPage() {
                     guests={guests}
                     form={form}
                     onBack={() => setStep(2)}
-                    onConfirm={() => setConfirmed(true)}
+                    onConfirm={handleConfirmBooking}
                     confirmed={confirmed}
                   />
                 )}

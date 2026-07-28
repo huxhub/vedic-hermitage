@@ -5,7 +5,6 @@ import {
   Package,
   MessageSquare,
   LogOut,
-  Save,
   Plus,
   Trash2,
   Star,
@@ -16,6 +15,14 @@ import {
   Upload,
   Layers,
   Pencil,
+  Calendar,
+  Menu,
+  Phone,
+  Mail,
+  FileText,
+  Clock,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import {
   fetchPackages,
@@ -27,19 +34,23 @@ import {
   addFeedback,
   updateSingleFeedback,
   deleteFeedback,
+  fetchBookings,
+  updateBookingStatus,
+  deleteBookingRecord,
   adminAuth,
   PackageItem,
   FeedbackItem,
+  BookingItem,
 } from "@/data/adminApi";
 import { playfair, dmSans } from "./shared";
 
 export default function AdminDashboardPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"packages" | "feedbacks">("packages");
+  const [activeTab, setActiveTab] = useState<"packages" | "feedbacks" | "bookings">("packages");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Package Management State
   const [pkgs, setPkgs] = useState<PackageItem[]>([]);
-  const [savingPkgs, setSavingPkgs] = useState(false);
   const [isAddPkgOpen, setIsAddPkgOpen] = useState(false);
   const [editingPkgId, setEditingPkgId] = useState<string | null>(null);
   const [newPkg, setNewPkg] = useState({
@@ -58,8 +69,20 @@ export default function AdminDashboardPage() {
   const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [savingFb, setSavingFb] = useState(false);
 
+  // Bookings Management State
+  const [bookings, setBookings] = useState<BookingItem[]>([]);
+  const [bookingFilter, setBookingFilter] = useState<"All" | "Pending" | "Confirmed" | "Completed">("All");
+
   useEffect(() => {
     loadData();
+    window.addEventListener("vedic-packages-updated", loadData);
+    window.addEventListener("vedic-feedbacks-updated", loadData);
+    window.addEventListener("vedic-bookings-updated", loadData);
+    return () => {
+      window.removeEventListener("vedic-packages-updated", loadData);
+      window.removeEventListener("vedic-feedbacks-updated", loadData);
+      window.removeEventListener("vedic-bookings-updated", loadData);
+    };
   }, []);
 
   const loadData = async () => {
@@ -68,6 +91,9 @@ export default function AdminDashboardPage() {
 
     const fData = await fetchFeedbacks();
     setFeedbacks(fData);
+
+    const bData = await fetchBookings();
+    setBookings(bData);
   };
 
   const handleLogout = () => {
@@ -75,23 +101,7 @@ export default function AdminDashboardPage() {
     navigate("/admin/login");
   };
 
-  const handlePriceChange = (id: string, newPrice: string) => {
-    setPkgs((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, price: newPrice } : p))
-    );
-  };
-
-  const handleSavePrices = async () => {
-    setSavingPkgs(true);
-    try {
-      await updatePackages(pkgs);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSavingPkgs(false);
-    }
-  };
-
+  // Package Handlers
   const handleOpenAddPkg = () => {
     setEditingPkgId(null);
     setNewPkg({ title: "", subtitle: "", price: "", duration: "7 Days", itemsStr: "" });
@@ -122,7 +132,6 @@ export default function AdminDashboardPage() {
         .filter(Boolean);
 
       if (editingPkgId) {
-        // Edit Mode
         const res = await updateSinglePackage(editingPkgId, {
           title: newPkg.title,
           price: newPkg.price,
@@ -136,7 +145,6 @@ export default function AdminDashboardPage() {
           setIsAddPkgOpen(false);
         }
       } else {
-        // Create Mode
         const res = await addNewPackage({
           title: newPkg.title,
           price: newPkg.price,
@@ -167,7 +175,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Testimonial Edit & Add Handlers
+  // Feedback Handlers
   const handleOpenEditFeedback = (fb: FeedbackItem) => {
     setEditingFbId(fb.id);
     setNewFb({
@@ -178,8 +186,6 @@ export default function AdminDashboardPage() {
       avatar: fb.avatar || "",
     });
     setAvatarPreview(fb.avatar || "");
-
-    // Smooth scroll to form
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -203,14 +209,12 @@ export default function AdminDashboardPage() {
     setSavingFb(true);
     try {
       if (editingFbId) {
-        // Edit Mode
         const res = await updateSingleFeedback(editingFbId, newFb);
         if (res.success && res.feedback) {
           setFeedbacks((prev) => prev.map((f) => (f.id === editingFbId ? res.feedback! : f)));
           setEditingFbId(null);
         }
       } else {
-        // Create Mode
         const res = await addFeedback(newFb);
         if (res.success && res.feedback) {
           setFeedbacks((prev) => [res.feedback!, ...prev]);
@@ -238,19 +242,74 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Booking Handlers
+  const handleStatusChange = async (id: number, newStatus: "Pending" | "Confirmed" | "Completed" | "Cancelled") => {
+    setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b)));
+    await updateBookingStatus(id, newStatus);
+  };
+
+  const handleDeleteBooking = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this booking record?")) return;
+    const ok = await deleteBookingRecord(id);
+    if (ok) {
+      setBookings((prev) => prev.filter((b) => b.id !== id));
+    }
+  };
+
+  const filteredBookings = bookings.filter((b) => {
+    if (bookingFilter === "All") return true;
+    return b.status === bookingFilter;
+  });
+
   return (
-    <div className="min-h-screen bg-[#f4f1ea] flex relative">
-      {/* ── Sidebar ── */}
-      <aside className="w-64 lg:w-72 bg-[#1b331c] text-white flex flex-col justify-between shrink-0 shadow-2xl border-r border-[#264528] fixed lg:sticky top-0 h-screen z-30">
+    <div className="min-h-screen bg-[#f4f1ea] flex flex-col lg:flex-row relative">
+      {/* ── Mobile Top Header ── */}
+      <div className="lg:hidden bg-[#1b331c] text-white px-5 py-4 flex items-center justify-between sticky top-0 z-40 shadow-md">
+        <span className="text-[18px] font-normal tracking-wide" style={{ fontFamily: playfair }}>
+          VEDIC HERMITAGE
+        </span>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+        >
+          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* ── Mobile Sidebar Backdrop Overlay ── */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 bg-black z-40 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── Sidebar (Responsive Mobile Drawer / Desktop Fixed) ── */}
+      <aside
+        className={`w-64 lg:w-72 bg-[#1b331c] text-white flex flex-col justify-between shrink-0 shadow-2xl border-r border-[#264528] fixed lg:sticky top-0 h-screen z-50 transition-transform duration-300 ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
         <div className="flex flex-col">
           {/* Brand Header */}
-          <div className="p-6 border-b border-white/10 flex flex-col gap-2">
+          <div className="p-6 border-b border-white/10 flex items-center justify-between">
             <span
-              className="text-[22px] font-normal tracking-wide text-white leading-tight"
+              className="text-[20px] lg:text-[22px] font-normal tracking-wide text-white leading-tight"
               style={{ fontFamily: playfair }}
             >
               VEDIC HERMITAGE
             </span>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="lg:hidden text-white/70 hover:text-white p-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Navigation Menu */}
@@ -264,7 +323,10 @@ export default function AdminDashboardPage() {
 
             {/* Nav Item: Packages */}
             <button
-              onClick={() => setActiveTab("packages")}
+              onClick={() => {
+                setActiveTab("packages");
+                setMobileMenuOpen(false);
+              }}
               className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[14px] font-medium transition-all duration-200 cursor-pointer w-full text-left relative ${
                 activeTab === "packages"
                   ? "bg-[#254527] text-white font-semibold shadow-inner border border-[#3b633e]"
@@ -284,7 +346,10 @@ export default function AdminDashboardPage() {
 
             {/* Nav Item: Customer Feedback */}
             <button
-              onClick={() => setActiveTab("feedbacks")}
+              onClick={() => {
+                setActiveTab("feedbacks");
+                setMobileMenuOpen(false);
+              }}
               className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[14px] font-medium transition-all duration-200 cursor-pointer w-full text-left relative ${
                 activeTab === "feedbacks"
                   ? "bg-[#254527] text-white font-semibold shadow-inner border border-[#3b633e]"
@@ -300,6 +365,36 @@ export default function AdminDashboardPage() {
               )}
               <MessageSquare className={`w-4 h-4 shrink-0 ${activeTab === "feedbacks" ? "text-[#c4622d]" : ""}`} />
               <span>Customer Feedback</span>
+            </button>
+
+            {/* Nav Item: Retreat Bookings */}
+            <button
+              onClick={() => {
+                setActiveTab("bookings");
+                setMobileMenuOpen(false);
+              }}
+              className={`flex items-center gap-3.5 px-4 py-3 rounded-xl text-[14px] font-medium transition-all duration-200 cursor-pointer w-full text-left relative ${
+                activeTab === "bookings"
+                  ? "bg-[#254527] text-white font-semibold shadow-inner border border-[#3b633e]"
+                  : "text-[#c2d4c4] hover:bg-white/5 hover:text-white"
+              }`}
+              style={{ fontFamily: dmSans }}
+            >
+              {activeTab === "bookings" && (
+                <motion.div
+                  layoutId="activeTabIndicator"
+                  className="absolute left-0 top-2 bottom-2 w-1.5 bg-[#c4622d] rounded-r-full"
+                />
+              )}
+              <Calendar className={`w-4 h-4 shrink-0 ${activeTab === "bookings" ? "text-[#c4622d]" : ""}`} />
+              <div className="flex items-center justify-between flex-1">
+                <span>Retreat Bookings</span>
+                {bookings.length > 0 && (
+                  <span className="bg-[#c4622d] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {bookings.length}
+                  </span>
+                )}
+              </div>
             </button>
           </nav>
         </div>
@@ -334,23 +429,29 @@ export default function AdminDashboardPage() {
       {/* ── Main Content Area ── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Sticky Header */}
-        <header className="bg-white/80 backdrop-blur-md border-b border-[#e2ded8] px-8 py-5 flex items-center justify-between sticky top-0 z-20 shadow-xs">
+        <header className="bg-white/80 backdrop-blur-md border-b border-[#e2ded8] px-4 sm:px-8 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 z-20 shadow-xs">
           <div>
-            <h1 className="text-[24px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
-              {activeTab === "packages" ? (
+            <h1 className="text-[20px] sm:text-[24px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
+              {activeTab === "packages" && (
                 <>
                   Booking Packages <span className="italic font-serif opacity-80">&amp;</span> Pricing
                 </>
-              ) : (
+              )}
+              {activeTab === "feedbacks" && (
                 <>
                   Customer Feedback <span className="italic font-serif opacity-80">&amp;</span> Reviews
                 </>
               )}
+              {activeTab === "bookings" && (
+                <>
+                  Retreat Bookings <span className="italic font-serif opacity-80">&amp;</span> Enquiries
+                </>
+              )}
             </h1>
-            <p className="text-[13px] text-[#786c62]" style={{ fontFamily: dmSans }}>
-              {activeTab === "packages"
-                ? "Configure pricing, edit, and create new retreat packages."
-                : "Manage and edit customer reviews displayed on the website testimonials marquee."}
+            <p className="text-[12px] sm:text-[13px] text-[#786c62]" style={{ fontFamily: dmSans }}>
+              {activeTab === "packages" && "Configure pricing, edit, and create new retreat packages."}
+              {activeTab === "feedbacks" && "Manage and edit customer reviews displayed on the website testimonials marquee."}
+              {activeTab === "bookings" && "View and manage guest retreat bookings created on the website."}
             </p>
           </div>
 
@@ -359,7 +460,7 @@ export default function AdminDashboardPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handleOpenAddPkg}
-              className="flex items-center gap-2 bg-[#2c4a2e] hover:bg-[#203722] text-white px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md cursor-pointer"
+              className="flex items-center justify-center gap-2 bg-[#2c4a2e] hover:bg-[#203722] text-white px-5 py-2.5 rounded-xl text-[13px] font-semibold transition-colors shadow-md cursor-pointer shrink-0"
               style={{ fontFamily: dmSans }}
             >
               <Plus className="w-4 h-4" />
@@ -369,10 +470,10 @@ export default function AdminDashboardPage() {
         </header>
 
         {/* Dashboard Body Content */}
-        <main className="p-8 flex-1 max-w-[1240px] w-full mx-auto flex flex-col gap-8">
-          {/* Section Specific Metric Card */}
+        <main className="p-4 sm:p-8 flex-1 max-w-[1240px] w-full mx-auto flex flex-col gap-6 sm:gap-8">
+          {/* Section Specific Metric Cards */}
           <div className="w-full">
-            {activeTab === "packages" ? (
+            {activeTab === "packages" && (
               <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between max-w-sm">
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
@@ -386,7 +487,9 @@ export default function AdminDashboardPage() {
                   <Layers className="w-5 h-5" />
                 </div>
               </div>
-            ) : (
+            )}
+
+            {activeTab === "feedbacks" && (
               <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between max-w-sm">
                 <div className="flex flex-col gap-1">
                   <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
@@ -398,6 +501,52 @@ export default function AdminDashboardPage() {
                 </div>
                 <div className="w-11 h-11 rounded-xl bg-[#f0f5f1] text-[#2c4a2e] flex items-center justify-center">
                   <MessageSquare className="w-5 h-5" />
+                </div>
+              </div>
+            )}
+
+            {activeTab === "bookings" && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
+                      Total Bookings
+                    </span>
+                    <span className="text-[22px] font-bold text-[#2d241e]" style={{ fontFamily: dmSans }}>
+                      {bookings.length} Reservations
+                    </span>
+                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-[#faf0ea] text-[#c4622d] flex items-center justify-center">
+                    <Calendar className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
+                      Pending Review
+                    </span>
+                    <span className="text-[22px] font-bold text-[#d4a843]" style={{ fontFamily: dmSans }}>
+                      {bookings.filter((b) => b.status === "Pending").length} Guests
+                    </span>
+                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-[#fefce8] text-[#d4a843] flex items-center justify-center">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-[#e2ded8] shadow-xs flex items-center justify-between">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-bold text-[#786c62] uppercase tracking-wider" style={{ fontFamily: dmSans }}>
+                      Confirmed Retreats
+                    </span>
+                    <span className="text-[22px] font-bold text-[#2c4a2e]" style={{ fontFamily: dmSans }}>
+                      {bookings.filter((b) => b.status === "Confirmed").length} Confirmed
+                    </span>
+                  </div>
+                  <div className="w-11 h-11 rounded-xl bg-[#f0f5f1] text-[#2c4a2e] flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5" />
+                  </div>
                 </div>
               </div>
             )}
@@ -415,7 +564,7 @@ export default function AdminDashboardPage() {
                 transition={{ duration: 0.2 }}
                 className="flex flex-col gap-6"
               >
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {pkgs.map((pkg) => (
                     <div
                       key={pkg.id}
@@ -427,7 +576,6 @@ export default function AdminDashboardPage() {
                             {pkg.subtitle || pkg.label}
                           </span>
 
-                          {/* Action Buttons: Edit & Delete */}
                           <div className="flex items-center gap-1.5 shrink-0">
                             <button
                               onClick={() => handleOpenEditPkg(pkg)}
@@ -494,14 +642,13 @@ export default function AdminDashboardPage() {
                 transition={{ duration: 0.2 }}
                 className="flex flex-col gap-8"
               >
-                {/* Add / Edit Feedback Form Card */}
-                <div className="bg-white p-6 sm:p-8 rounded-2xl border border-[#e2ded8] shadow-sm flex flex-col gap-6">
+                <div className="bg-white p-5 sm:p-8 rounded-2xl border border-[#e2ded8] shadow-sm flex flex-col gap-6">
                   <div className="flex items-center justify-between border-b border-[#f0eae1] pb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-xl bg-[#2c4a2e]/10 flex items-center justify-center text-[#2c4a2e]">
                         {editingFbId ? <Pencil className="w-5 h-5 text-[#c4622d]" /> : <Plus className="w-5 h-5" />}
                       </div>
-                      <h3 className="text-[20px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
+                      <h3 className="text-[18px] sm:text-[20px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
                         {editingFbId ? "Edit Customer Review" : "Add New Customer Review"}
                       </h3>
                     </div>
@@ -574,12 +721,11 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Image Upload Input */}
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
                         Customer Photo / Avatar (Image Upload)
                       </label>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 flex-wrap">
                         <label className="flex items-center gap-2 bg-[#faf8f5] border border-[#d9d1c7] hover:border-[#c4622d] text-[#2d241e] px-4 py-2.5 rounded-xl text-[13px] font-semibold cursor-pointer transition-colors">
                           <Upload className="w-4 h-4 text-[#c4622d]" />
                           <span>Choose Photo...</span>
@@ -651,7 +797,6 @@ export default function AdminDashboardPage() {
                   </form>
                 </div>
 
-                {/* Feedback List */}
                 <div className="flex flex-col gap-4">
                   <h3 className="text-[20px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
                     Active Website Reviews ({feedbacks.length})
@@ -696,7 +841,6 @@ export default function AdminDashboardPage() {
                           </p>
                         </div>
 
-                        {/* Action Buttons: Edit & Delete Review */}
                         <div className="pt-3 border-t border-[#f2ede6] flex items-center justify-end gap-3">
                           <button
                             onClick={() => handleOpenEditFeedback(fb)}
@@ -721,6 +865,182 @@ export default function AdminDashboardPage() {
                 </div>
               </motion.div>
             )}
+
+            {/* Tab 3: Retreat Bookings Section */}
+            {activeTab === "bookings" && (
+              <motion.div
+                key="bookings-tab"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.2 }}
+                className="flex flex-col gap-6"
+              >
+                {/* Filter bar */}
+                <div className="flex items-center justify-between flex-wrap gap-4 bg-white p-4 rounded-2xl border border-[#e2ded8] shadow-xs">
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 w-full sm:w-auto">
+                    {(["All", "Pending", "Confirmed", "Completed"] as const).map((filter) => (
+                      <button
+                        key={filter}
+                        onClick={() => setBookingFilter(filter)}
+                        className={`px-4 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                          bookingFilter === filter
+                            ? "bg-[#2c4a2e] text-white shadow-xs"
+                            : "bg-[#faf8f5] text-[#786c62] hover:bg-[#e8e2d8]"
+                        }`}
+                        style={{ fontFamily: dmSans }}
+                      >
+                        {filter} ({filter === "All" ? bookings.length : bookings.filter((b) => b.status === filter).length})
+                      </button>
+                    ))}
+                  </div>
+
+                  <span className="text-[12px] text-[#786c62] font-semibold" style={{ fontFamily: dmSans }}>
+                    Showing {filteredBookings.length} of {bookings.length} reservations
+                  </span>
+                </div>
+
+                {/* Bookings Grid */}
+                {filteredBookings.length === 0 ? (
+                  <div className="bg-white rounded-2xl p-12 text-center border border-[#e2ded8] flex flex-col items-center gap-3">
+                    <AlertCircle className="w-10 h-10 text-[#d4a843] opacity-60" />
+                    <h3 className="text-[18px] font-medium text-[#2d241e]" style={{ fontFamily: playfair }}>
+                      No Bookings Found
+                    </h3>
+                    <p className="text-[13px] text-[#786c62]" style={{ fontFamily: dmSans }}>
+                      {bookingFilter === "All"
+                        ? "No retreat bookings have been submitted yet."
+                        : `No bookings match the "${bookingFilter}" filter criteria.`}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {filteredBookings.map((b) => (
+                      <div
+                        key={b.id}
+                        className="bg-white p-6 rounded-2xl border border-[#e2ded8] shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-5 min-w-0 overflow-hidden"
+                      >
+                        <div className="flex flex-col gap-4 min-w-0">
+                          {/* Header: Status Dropdown & Date */}
+                          <div className="flex items-center justify-between gap-3 flex-wrap min-w-0">
+                            <span className="text-[11px] font-semibold text-[#87786c]" style={{ fontFamily: dmSans }}>
+                              Booked on: {new Date(b.created_at || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </span>
+
+                            <select
+                              value={b.status}
+                              onChange={(e) => handleStatusChange(b.id, e.target.value as any)}
+                              className={`text-[12px] font-bold px-3 py-1 rounded-full outline-none cursor-pointer border transition-colors ${
+                                b.status === "Confirmed"
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                  : b.status === "Completed"
+                                  ? "bg-blue-50 text-blue-800 border-blue-200"
+                                  : b.status === "Cancelled"
+                                  ? "bg-red-50 text-red-800 border-red-200"
+                                  : "bg-amber-50 text-amber-800 border-amber-200"
+                              }`}
+                              style={{ fontFamily: dmSans }}
+                            >
+                              <option value="Pending">🟡 Pending</option>
+                              <option value="Confirmed">🟢 Confirmed</option>
+                              <option value="Completed">🔵 Completed</option>
+                              <option value="Cancelled">🔴 Cancelled</option>
+                            </select>
+                          </div>
+
+                          {/* Customer Info */}
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-11 h-11 rounded-full bg-[#faf0ea] text-[#c4622d] font-bold flex items-center justify-center text-base shadow-xs shrink-0">
+                              {b.name.charAt(0)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="text-[17px] font-semibold text-[#2d241e] truncate" style={{ fontFamily: dmSans }}>
+                                {b.name}
+                              </h4>
+                              {b.country && (
+                                <span className="text-[12px] text-[#786c62] flex items-center gap-1 truncate" style={{ fontFamily: dmSans }}>
+                                  <MapPin className="w-3 h-3 text-[#c4622d] shrink-0" />
+                                  {b.country}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Package Details Banner */}
+                          <div className="bg-[#faf8f5] p-3.5 rounded-xl border border-[#e8e2d8] flex flex-col gap-1 min-w-0">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-[#c4622d]" style={{ fontFamily: dmSans }}>
+                              Selected Package
+                            </span>
+                            <div className="flex items-center justify-between gap-2 min-w-0">
+                              <span className="text-[15px] font-semibold text-[#2d241e] break-words min-w-0 flex-1" style={{ fontFamily: playfair }}>
+                                {b.package_name}
+                              </span>
+                              {b.package_price && (
+                                <span className="text-[13px] font-bold text-[#2c4a2e] shrink-0" style={{ fontFamily: dmSans }}>
+                                  {b.package_price}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Reservation Meta Info */}
+                          <div className="grid grid-cols-2 gap-3 text-[13px] text-[#4a3f36]" style={{ fontFamily: dmSans }}>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <User className="w-4 h-4 text-[#87786c] shrink-0" />
+                              <span className="truncate">{b.guests || "01 Person"}</span>
+                            </div>
+                            {b.arrival_date && (
+                              <div className="flex items-center gap-2 min-w-0">
+                                <Calendar className="w-4 h-4 text-[#87786c] shrink-0" />
+                                <span className="truncate">{b.arrival_date}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2 min-w-0 col-span-2 sm:col-span-1">
+                              <Mail className="w-4 h-4 text-[#87786c] shrink-0" />
+                              <a href={`mailto:${b.email}`} className="hover:underline text-[#c4622d] truncate">
+                                {b.email}
+                              </a>
+                            </div>
+                            {b.phone && (
+                              <div className="flex items-center gap-2 min-w-0 col-span-2 sm:col-span-1">
+                                <Phone className="w-4 h-4 text-[#87786c] shrink-0" />
+                                <a href={`tel:${b.phone}`} className="hover:underline text-[#2c4a2e] truncate">
+                                  {b.phone}
+                                </a>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Health Notes */}
+                          {b.health_notes && (
+                            <div className="bg-[#fefce8] p-3 rounded-xl border border-[#fef08a] flex flex-col gap-1 min-w-0">
+                              <span className="text-[11px] font-bold text-[#a16207] uppercase tracking-wider flex items-center gap-1" style={{ fontFamily: dmSans }}>
+                                <FileText className="w-3 h-3" /> Health Notes / Special Needs
+                              </span>
+                              <p className="text-[12px] text-[#713f12] leading-relaxed break-words" style={{ fontFamily: dmSans }}>
+                                {b.health_notes}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Card Footer Delete Button */}
+                        <div className="pt-3 border-t border-[#f2ede6] flex justify-end">
+                          <button
+                            onClick={() => handleDeleteBooking(b.id)}
+                            className="flex items-center gap-1.5 text-red-600 hover:text-red-800 text-[12px] font-semibold transition-colors cursor-pointer"
+                            style={{ fontFamily: dmSans }}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete Record</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            )}
           </AnimatePresence>
         </main>
       </div>
@@ -729,16 +1049,14 @@ export default function AdminDashboardPage() {
       <AnimatePresence>
         {isAddPkgOpen && (
           <>
-            {/* Backdrop Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsAddPkgOpen(false)}
-              className="fixed inset-0 bg-black z-40"
+              className="fixed inset-0 bg-black z-50"
             />
 
-            {/* Slide-over Panel */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -747,7 +1065,6 @@ export default function AdminDashboardPage() {
               className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white z-50 shadow-2xl flex flex-col justify-between border-l border-[#e2ded8]"
             >
               <div className="flex flex-col flex-1 overflow-y-auto p-6 gap-6">
-                {/* Drawer Header */}
                 <div className="flex items-center justify-between border-b border-[#f0eae1] pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-[#c4622d]/10 text-[#c4622d] flex items-center justify-center">
@@ -765,7 +1082,6 @@ export default function AdminDashboardPage() {
                   </button>
                 </div>
 
-                {/* Form Fields */}
                 <form id="add-pkg-form" onSubmit={handleSavePackageForm} className="flex flex-col gap-5">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[12px] font-semibold text-[#6b5e54]" style={{ fontFamily: dmSans }}>
@@ -846,7 +1162,6 @@ export default function AdminDashboardPage() {
                 </form>
               </div>
 
-              {/* Drawer Footer Buttons */}
               <div className="p-6 border-t border-[#f0eae1] bg-[#faf8f5] flex items-center justify-end gap-3">
                 <button
                   type="button"

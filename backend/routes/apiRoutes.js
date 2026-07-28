@@ -10,6 +10,10 @@ import {
   addFeedback,
   updateFeedback,
   deleteFeedback,
+  getBookings,
+  createBooking,
+  updateBookingStatus,
+  deleteBooking,
 } from '../controllers/adminController.js';
 import { handleContactEnquiry } from '../controllers/contactController.js';
 
@@ -37,6 +41,12 @@ router.get('/feedbacks', getFeedbacks);
 router.post('/feedbacks', addFeedback);
 router.put('/feedbacks/:id', updateFeedback);
 router.delete('/feedbacks/:id', deleteFeedback);
+
+// Retreat Bookings API
+router.get('/bookings', getBookings);
+router.post('/bookings', createBooking);
+router.put('/bookings/:id/status', updateBookingStatus);
+router.delete('/bookings/:id', deleteBooking);
 
 // Contact Enquiry API
 router.post('/contact', handleContactEnquiry);
