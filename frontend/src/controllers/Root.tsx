@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from "react-router";
 import svgPaths from "@/imports/AyurvedaLandingPage/svg-hyqo47z0o2";
 import ClipPathGroup from "@/imports/ClipPathGroup/index";
 import Lenis from "lenis";
+import WhatsAppWidget from "@/components/WhatsAppWidget";
 
 const playfair = "'Playfair Display', serif";
 const dmSans = "'DM Sans', sans-serif";
@@ -243,6 +244,9 @@ export default function Root() {
           </div>
         </div>
       </footer>
+
+      {/* Floating WhatsApp Action Widget */}
+      <WhatsAppWidget />
     </div>
   );
 }
