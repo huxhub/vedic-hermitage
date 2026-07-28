@@ -116,15 +116,6 @@ export default function AdminDashboardPage() {
             >
               VEDIC HERMITAGE
             </span>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#34d399] animate-pulse" />
-              <span
-                className="text-[#d4a843] text-[10px] font-bold uppercase tracking-widest"
-                style={{ fontFamily: dmSans }}
-              >
-                ADMIN DASHBOARD • MYSQL LIVE
-              </span>
-            </div>
           </div>
 
           {/* Navigation Menu */}
@@ -211,7 +202,15 @@ export default function AdminDashboardPage() {
         <header className="bg-white/80 backdrop-blur-md border-b border-[#e2ded8] px-8 py-5 flex items-center justify-between sticky top-0 z-20 shadow-xs">
           <div>
             <h1 className="text-[24px] font-normal text-[#2d241e]" style={{ fontFamily: playfair }}>
-              {activeTab === "packages" ? "Booking Packages & Pricing" : "Customer Feedback & Reviews"}
+              {activeTab === "packages" ? (
+                <>
+                  Booking Packages <span className="italic font-serif opacity-80">&amp;</span> Pricing
+                </>
+              ) : (
+                <>
+                  Customer Feedback <span className="italic font-serif opacity-80">&amp;</span> Reviews
+                </>
+              )}
             </h1>
             <p className="text-[13px] text-[#786c62]" style={{ fontFamily: dmSans }}>
               {activeTab === "packages"
